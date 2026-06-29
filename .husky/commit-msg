@@ -1,0 +1,8 @@
+#!/bin/sh
+message=$(head -n1 "$1")
+if ! echo "$message" | grep -qE '^(feat|fix|chore|test|docs|style|refactor|perf|ci|build|revert)(\(.+\))?!?: .{1,}';
+then
+  echo "Commit message must follow Conventional Commits."
+  echo "Example: feat: add login form"
+  exit 1
+fi

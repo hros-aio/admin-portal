@@ -1,0 +1,4 @@
+context_file: KIMI.md
+context_markers:
+  start: <!-- SPECKIT START -->
+  end: <!-- SPECKIT END -->

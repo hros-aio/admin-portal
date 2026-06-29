@@ -1,50 +1,105 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Engineering Constitution
 
-## Core Principles
+## Source of Truth
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+- `.specify/memory/frontend-tech-stack.md` is the binding Source of Truth for all frontend work.
+- This constitution is binding for engineering governance; agents MUST read both files before implementing.
+- If a task conflicts with either document, stop and report the conflict before writing code.
+- No silent deviation is permitted. Any exception requires an approved ADR addendum.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+## Architecture Principles
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- **P1 — Type-safety end-to-end**: No `any`. API contracts flow from OpenAPI → generated types → hooks → components. A backend contract change must surface as a compile error until addressed.
+- **P2 — Server is the source of truth for authorization**: Client-side RBAC is UX-only. Every privileged action is enforced server-side; handle `403` gracefully.
+- **P3 — Feature-based modularity**: Code is organized by business capability. A feature is deletable by deleting one folder.
+- **P4 — Server state and UI state are separate**: TanStack Query owns server state; Zustand owns UI-only state. They are never mixed.
+- **P5 — Composition over configuration sprawl**: Prefer small composable hooks/components over mega-components with prop explosion.
+- **P6 — Boring, explicit, predictable code**: Correctness > readability > testability > observability > performance. No clever abstractions.
+- **P7 — Confirmation-first UX for destructive actions**: Archive, cancel, remove, and similar actions require explicit, typed, or two-step confirmation.
+- **P8 — Every non-trivial unit of logic is tested**: Hooks, utilities, components with business logic, and critical journeys require tests.
+- **P9 — Optimistic UI only where safe to roll back**: Allowed only for low-risk, easily-reversible mutations. Forbidden for financial/destructive operations.
+- **P10 — Single responsibility for files**: One exported component or hook of meaning per file.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+## Non-Negotiable Engineering Rules
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+- All API request/response types are generated from the backend's committed OpenAPI document. Never hand-write API types.
+- Access tokens are kept in memory only. Refresh tokens are stored in HttpOnly, Secure, SameSite=Strict cookies set by the backend.
+- No token is ever stored in `localStorage` or `sessionStorage`.
+- All forms use React Hook Form + Zod.
+- All data tables use TanStack Table in manual/server-driven mode.
+- All list endpoints use server-side pagination, sorting, and filtering.
+- All mutations go through the typed OpenAPI service layer + TanStack Query. Do not use Next.js Server Actions for mutations.
+- All state-changing requests attach `Authorization`, `X-Request-ID`, and `X-CSRF-Token` headers.
+- `dangerouslySetInnerHTML` is forbidden.
+- WCAG 2.1 AA is mandatory for every shipped surface.
+- Exact dependency versions are pinned in `package.json` for core stack packages.
+- pnpm is the only package manager. `package-lock.json` and `yarn.lock` must not be committed.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Layer Dependency Rules
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- `app/` may import from `features/`, `components/`, `providers/`, and `lib/`.
+- `app/` must NOT import `services/` directly. Route data fetching goes through feature hooks.
+- `features/<feature>/` may import from `components/`, `hooks/`, `lib/`, `constants/`, `types/`, and its own `services/<feature>.service.ts`.
+- `features/<feature>/` must NOT import internals of other `features/<other>/`.
+- `components/` may import from `lib/` and `types/`. Must remain feature-agnostic.
+- `components/` must NOT import from `features/` or `services/`.
+- `services/` may import from `lib/api/*` and `types/`. No React hooks inside services.
+- `services/` must NOT import from `features/`.
+- Feature-scoped stores under `features/<feature>/stores/` may import from `lib/` and `types/`. They must NOT import `services/` directly.
+- Cross-feature UI stores under `src/stores/` are rare; prefer feature-scoped stores.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Feature Boundary Rules
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Features are business capabilities: `auth`, `tenants`, `subscriptions`, `plans`, `admins`, `policies`, `audit-logs`, `dashboard`.
+- Each feature owns its components, hooks, schemas, mappers, utils, stores, and types.
+- Shared reuse across features goes through `components/`, `hooks/`, or `lib/`, never through direct feature-to-feature imports.
+- A feature's service layer is the only allowed importer of `rawClient` for that domain.
+- Feature-level mappers (`src/features/<feature>/mappers/`) explicitly convert `snake_case` API shapes to camelCase view models. This boundary is explicit, never implicit.
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+## ADR Policy
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- Architecture and technology decisions affecting the stack, security model, state management, routing, or major dependencies must be recorded as an ADR.
+- Existing ADRs are authoritative: ADR-FE-001 (token storage), ADR-FE-002 (shadcn/ui + Radix), ADR-FE-003 (TanStack Query over Server Actions), ADR-FE-004 (TanStack Table), ADR-FE-005 (Zod validation).
+- A new ADR is required before introducing a dependency not on the approved stack, replacing an approved technology, or changing a forbidden practice.
+- ADRs must include context, decision, alternatives considered, and consequence.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+## Forbidden Practices
+
+- Storing any auth token in `localStorage` or `sessionStorage`.
+- Using `any` explicitly or implicitly.
+- Hand-writing API request/response types.
+- Calling `rawClient`/`openapi-fetch` directly from components or hooks.
+- Putting TanStack Query data into a Zustand store.
+- Using `useState` for multi-field forms.
+- Writing validation logic in `onSubmit` instead of Zod schemas.
+- Implementing client-side pagination/sorting/filtering on server-paginated endpoints.
+- Treating `403` from a privileged action as unreachable.
+- Making destructive actions optimistic.
+- Using `dangerouslySetInnerHTML`.
+- Hardcoding error message strings in components.
+- Hardcoding hex color values in charts or status badges.
+- Building modals, dropdowns, or comboboxes from scratch instead of using Radix-backed shadcn/ui primitives.
+- Adding dependencies listed in the forbidden-dependency table.
+- Cross-importing one feature's internals into another feature folder.
+- Editing `src/types/api.generated.ts` by hand.
+- Using `getByTestId` as the default RTL query strategy.
+- Shipping a new interactive surface without a corresponding route-segment error boundary.
+- Mixing `snake_case` API shapes directly into JSX without passing through a feature mapper when the component expects a camelCase view model.
+
+## AI Implementation Rules
+
+- Read `.specify/memory/frontend-tech-stack.md` and this constitution before every implementation task.
+- Do not redesign architecture. Implement within the existing stack and patterns.
+- Do not perform unnecessary refactoring. Change only what the task requires.
+- Do not add, remove, or upgrade dependencies unless explicitly required and approved via the ADR process.
+- Follow the OpenAPI-generated types exactly. Regenerate types when the contract changes and commit the result.
+- Respect feature boundaries. Do not import across feature internals.
+- Keep changes scoped to the requested feature or fix. Never modify unrelated modules.
+- Generate or update tests alongside implementation. Coverage thresholds are binding.
+- Follow existing naming, file, export, and component conventions.
+- Never create new top-level or feature folders without justification documented in the task or ADR.
+- When in conflict with this constitution or the tech stack, stop and report the conflict instead of proceeding.
+
+---
+
+**Version**: 1.0 | **Ratified**: Baseline | **Last Amended**: Baseline

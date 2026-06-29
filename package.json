@@ -1,0 +1,93 @@
+{
+  "name": "super-admin-portal",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.5.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "openapi:types": "openapi-typescript ../backend/api/openapi.yaml -o src/types/api.generated.ts",
+    "openapi:check": "pnpm openapi:types && git diff --exit-code src/types/api.generated.ts",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "3.9.0",
+    "@radix-ui/react-dialog": "1.1.1",
+    "@radix-ui/react-dropdown-menu": "2.1.1",
+    "@radix-ui/react-label": "2.1.0",
+    "@radix-ui/react-select": "2.1.1",
+    "@radix-ui/react-slot": "1.1.0",
+    "@radix-ui/react-toast": "1.2.1",
+    "@tanstack/react-query": "5.51.11",
+    "@tanstack/react-query-devtools": "5.51.11",
+    "@tanstack/react-table": "8.19.3",
+    "class-variance-authority": "0.7.0",
+    "clsx": "2.1.1",
+    "next": "14.2.5",
+    "openapi-fetch": "0.10.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-hook-form": "7.52.1",
+    "recharts": "2.12.7",
+    "tailwind-merge": "2.4.0",
+    "uuid": "10.0.0",
+    "zod": "3.23.8",
+    "zustand": "4.5.4"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.9.1",
+    "@eslint/js": "9.7.0",
+    "@playwright/test": "1.45.3",
+    "@testing-library/dom": "10.4.0",
+    "@testing-library/jest-dom": "6.4.8",
+    "@testing-library/react": "16.0.0",
+    "@testing-library/user-event": "14.5.2",
+    "@types/node": "20.14.12",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "@types/uuid": "10.0.0",
+    "@vitejs/plugin-react": "4.3.1",
+    "@vitest/coverage-v8": "2.0.4",
+    "autoprefixer": "10.4.19",
+    "eslint": "9.7.0",
+    "eslint-plugin-boundaries": "4.2.2",
+    "eslint-plugin-jsx-a11y": "6.10.0",
+    "eslint-plugin-react": "7.37.0",
+    "eslint-plugin-react-hooks": "5.0.0",
+    "husky": "9.1.1",
+    "jsdom": "24.1.1",
+    "lint-staged": "15.2.7",
+    "msw": "2.3.5",
+    "openapi-typescript": "7.1.0",
+    "postcss": "8.4.39",
+    "prettier": "3.3.3",
+    "prettier-plugin-tailwindcss": "0.6.5",
+    "tailwindcss": "3.4.6",
+    "typescript": "5.5.4",
+    "typescript-eslint": "8.0.0",
+    "vitest": "2.0.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  }
+}
