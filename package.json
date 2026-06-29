@@ -20,7 +20,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "openapi:types": "openapi-typescript ../backend/api/openapi.yaml -o src/types/api.generated.ts",
+    "openapi:types": "openapi-typescript ./openapi.yaml -o src/types/api.generated.ts",
     "openapi:check": "pnpm openapi:types && git diff --exit-code src/types/api.generated.ts",
     "prepare": "husky"
   },
