@@ -18,9 +18,22 @@
 
 ---
 
+## Phase 2: Auth State Management & Layout Guards
+
+**Purpose**: Implement the in-memory auth store and the authenticated-route layout guard.
+
+- [x] T002 Create `src/features/auth/stores/auth-store.ts` with `accessToken` (string | null), `setToken(token)`, and `clearSession()`; do not use persistence middleware.
+- [x] T003 Create `src/components/layout/auth-guard.tsx` that reads `accessToken` from `useAuthStore` and redirects to `/login` when unauthenticated; render children when authenticated.
+
+**Checkpoint**: The auth store holds the token in memory and the guard redirects unauthenticated users.
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 has no dependencies and can start immediately.
+- T002 has no dependencies and can start immediately.
+- T003 depends on T002.
 
 ---
 
@@ -29,11 +42,13 @@
 ### MVP First
 
 1. Complete T001.
-2. Validate the file with `pnpm tsc --noEmit`.
+2. Complete T002.
+3. Complete T003.
+4. Validate with `pnpm tsc --noEmit`.
 
 ---
 
 ## Notes
 
-- Scope is limited to the schema file only.
-- Do not create UI components, pages, routing, API client code, or authentication logic.
+- T001 scope is limited to the schema file only.
+- T002/T003 scope is limited to the auth store and layout guard; no pages, routing changes, API client changes, or authentication business logic.
