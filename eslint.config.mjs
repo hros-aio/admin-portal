@@ -135,7 +135,7 @@ export default ts.config(
       "coverage",
       "playwright-report",
       "test-results",
-      "src/types/api.generated.ts"
+      "src/types/api.generated.ts",
     ],
   }
 );

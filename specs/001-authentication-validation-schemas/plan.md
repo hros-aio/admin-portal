@@ -65,6 +65,29 @@ src/components/layout/
 
 **Structure Decision**: Single-project Next.js frontend. The schema and store files live in their respective feature folders following the `src/features/<feature>/<category>/` convention. The layout guard is placed in `src/components/layout/` as a shared route-protection primitive.
 
+## Phase 3: Silent Refresh API Interceptor
+
+### Goal
+
+Extend the existing `authMiddleware` so that every authenticated request carries the in-memory access token, a 401 response triggers a single silent refresh via `authService.refreshSession()`, the original request is retried with the new token, and refresh failure clears the session and redirects to `/login`. Concurrent 401s must share one refresh attempt.
+
+### Changes
+
+- Create `src/features/auth/services/auth.service.ts` with `authService.refreshSession()`.
+- Update `src/lib/api/auth-middleware.ts`:
+  - Preserve existing `Authorization: Bearer <accessToken>` injection from `useAuthStore`.
+  - Add `onResponse` handling for 401 responses.
+  - Skip refresh for the refresh endpoint itself to avoid loops.
+  - Deduplicate concurrent refresh attempts with a shared promise.
+  - Update `useAuthStore.getState().setToken` after a successful refresh.
+  - Retry the original request with the new token.
+  - Call `useAuthStore.getState().clearSession()` and redirect to `/login` when refresh fails.
+
+### Tests
+
+- Unit test `authService.refreshSession` for success and failure paths.
+- Unit test the middleware's token injection, 401 retry, refresh failure redirect, and refresh deduplication.
+
 ## Complexity Tracking
 
-No constitution violations anticipated. The layout guard imports from the auth feature store; this is a deliberate cross-cutting concern analogous to the existing `src/lib/api/auth-middleware.ts`.
+No constitution violations anticipated. The layout guard and auth middleware import from the auth feature store; this is a deliberate cross-cutting concern analogous to the existing `src/lib/api/auth-middleware.ts`.
