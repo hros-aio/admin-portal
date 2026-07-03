@@ -2,14 +2,14 @@
   "version": "0.9.6.dev0",
   "integration_state_schema": 1,
   "installed_integrations": [
-    "kimi"
+    "codex"
   ],
   "integration_settings": {
-    "kimi": {
+    "codex": {
       "script": "sh",
       "invoke_separator": "-"
     }
   },
-  "integration": "kimi",
-  "default_integration": "kimi"
+  "integration": "codex",
+  "default_integration": "codex"
 }

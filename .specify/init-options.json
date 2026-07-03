@@ -1,9 +1,9 @@
 {
-  "ai": "kimi",
+  "ai": "codex",
   "ai_skills": true,
   "branch_numbering": "sequential",
   "here": false,
-  "integration": "kimi",
+  "integration": "codex",
   "script": "sh",
   "speckit_version": "0.9.6.dev0"
 }
