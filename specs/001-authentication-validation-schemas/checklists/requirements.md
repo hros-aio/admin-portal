@@ -31,4 +31,4 @@
 
 ## Notes
 
-- Specification has been extended through Phase 4 for the auth store, guard, silent refresh interceptor, and login UI component while keeping API submission outside the visual form.
+- Specification has been extended through Phase 6 for the auth store, guard, silent refresh interceptor, login UI component, credential-login business logic, and Super Admin MFA challenge flow while keeping API submission outside visual form components.

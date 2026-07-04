@@ -6,7 +6,7 @@
 
 ## Summary
 
-Create a feature-scoped Zod schema file at `src/features/auth/schemas/auth.schema.ts` that defines and exports schemas and inferred types for login, MFA, password reset, and invitation acceptance forms. Additionally, implement an in-memory auth store, a layout guard that redirects unauthenticated users to `/login`, silent refresh request handling, a reusable visual login form component, and credential-login business logic that connects the login page to the authentication API.
+Create a feature-scoped Zod schema file at `src/features/auth/schemas/auth.schema.ts` that defines and exports schemas and inferred types for login, MFA, password reset, and invitation acceptance forms. Additionally, implement an in-memory auth store, a layout guard that redirects unauthenticated users to `/login`, silent refresh request handling, a reusable visual login form component, credential-login business logic that connects the login page to the authentication API, and the MFA challenge flow required when Super Admin login returns an MFA challenge token.
 
 ## Technical Context
 
@@ -26,7 +26,7 @@ Create a feature-scoped Zod schema file at `src/features/auth/schemas/auth.schem
 
 **Constraints**: Frontend only. Phase 4 must not implement the login API call; the login form receives a submit callback and loading state from its consumer.
 
-**Scale/Scope**: Schema file, auth store, layout guard, silent refresh service/middleware, login form component, credential-login hook, and login page wiring for the Authentication feature.
+**Scale/Scope**: Schema file, auth store, layout guard, silent refresh service/middleware, login form component, credential-login hook, MFA verification hook, MFA challenge form, and login page wiring for the Authentication feature.
 
 ## Constitution Check
 
@@ -59,7 +59,8 @@ src/features/auth/schemas/
 └── auth.schema.ts
 
 src/features/auth/components/
-└── login-form.tsx
+├── login-form.tsx
+└── mfa-challenge-form.tsx
 
 src/features/auth/stores/
 └── auth-store.ts
@@ -68,7 +69,8 @@ src/features/auth/services/
 └── auth.service.ts
 
 src/features/auth/hooks/
-└── use-login.ts
+├── use-login.ts
+└── use-verify-mfa.ts
 
 src/components/layout/
 ├── .gitkeep
@@ -148,6 +150,36 @@ Connect the reusable `LoginForm` to the backend credential-login endpoint throug
 - Hook or route-level test verifies success updates auth state and navigates to `/dashboard`.
 - Hook or route-level test verifies `ACCOUNT_LOCKED` and generic login errors show the correct toast messages.
 
+## Phase 6: MFA Challenge Flow
+
+### Goal
+
+Complete the second step of Super Admin authentication when credential login returns an MFA challenge token. The login page should switch from credential entry to a TOTP challenge, verify the entered code with the backend, store the resulting access token in the in-memory auth store, and redirect to `/dashboard`.
+
+### Changes
+
+- Create `src/features/auth/components/mfa-challenge-form.tsx`:
+  - Accept an `mfaToken` prop and a delegated submit callback.
+  - Use the existing MFA validation schema for the TOTP code.
+  - Render a focused MFA code entry form with loading and validation states.
+  - Keep API calls out of the visual component.
+- Extend `src/features/auth/services/auth.service.ts` with `authService.verifyMfa()` that calls `POST /auth/mfa/verify` with `mfa_token`, `method: 'totp'`, and `code`.
+- Create `src/features/auth/hooks/use-verify-mfa.ts`:
+  - Use TanStack Query `useMutation`.
+  - On successful `access_token`, call `useAuthStore` token setter and redirect to `/dashboard`.
+  - On verification errors, show a clear MFA verification failure message.
+- Update `src/app/(auth)/login/page.tsx`:
+  - Track an MFA challenge token when `useLogin()` returns `mfa_token`.
+  - Render `MfaChallengeForm` instead of `LoginForm` while an MFA challenge is active.
+  - Pass submit and loading state from `useVerifyMfa()` into the MFA form.
+
+### Tests
+
+- Component test verifies the MFA form validates code input, submits the code with the challenge token, and disables controls while loading.
+- Service test verifies `verifyMfa()` sends the expected verification payload and handles backend or empty-response errors.
+- Hook or route-level test verifies a login response with `mfa_token` shows the MFA challenge instead of the login form.
+- Hook or route-level test verifies successful MFA verification stores the access token and redirects to `/dashboard`.
+
 ## Complexity Tracking
 
-No constitution violations anticipated. The layout guard and auth middleware import from the auth feature store; this is a deliberate cross-cutting concern analogous to the existing `src/lib/api/auth-middleware.ts`.
+No constitution violations anticipated. The layout guard and auth middleware import from the auth feature store; this is a deliberate cross-cutting concern analogous to the existing `src/lib/api/auth-middleware.ts`. MFA verification follows the same service/hook/page wiring pattern as credential login while keeping API behavior out of visual form components.

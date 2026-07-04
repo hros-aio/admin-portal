@@ -9,7 +9,11 @@ import { useAuthStore } from "@/features/auth/stores/auth-store";
 import type { ApiError } from "@/lib/api/result";
 import { useToast } from "@/lib/toast";
 
-export function useLogin() {
+interface UseLoginOptions {
+  onMfaRequired?: (mfaToken: string) => void;
+}
+
+export function useLogin(options: UseLoginOptions = {}) {
   const router = useRouter();
   const toast = useToast();
   const setToken = useAuthStore((state) => state.setToken);
@@ -20,6 +24,11 @@ export function useLogin() {
       if (response.access_token) {
         setToken(response.access_token);
         router.push("/dashboard");
+        return;
+      }
+
+      if (response.mfa_token) {
+        options.onMfaRequired?.(response.mfa_token);
       }
     },
     onError: (error) => {

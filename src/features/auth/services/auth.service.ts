@@ -4,6 +4,23 @@ import type { LoginInput } from "@/features/auth/schemas/auth.schema";
 import type { components } from "@/types/api.generated";
 
 export type LoginResponse = components["schemas"]["LoginResponse"];
+type MfaVerifyRequest = components["schemas"]["MFAVerifyRequest"];
+
+export interface VerifyMfaInput {
+  mfa_token: string;
+  code: string;
+}
+
+function ensureLoginResponse(data: LoginResponse | undefined, status: number): LoginResponse {
+  if (!data) {
+    throw new ApiError(status, {
+      code: "EMPTY_RESPONSE",
+      message: "Authentication response did not contain a response body.",
+    });
+  }
+
+  return data;
+}
 
 export const authService = {
   async login(credentials: LoginInput): Promise<LoginResponse> {
@@ -19,7 +36,29 @@ export const authService = {
       });
     }
 
-    return data;
+    return ensureLoginResponse(data, status);
+  },
+
+  async verifyMfa(values: VerifyMfaInput): Promise<LoginResponse> {
+    const body: MfaVerifyRequest = {
+      mfa_token: values.mfa_token,
+      method: "totp",
+      code: values.code,
+    };
+
+    const { data, error, response } = await rawClient.POST("/v1/auth/mfa/verify", {
+      body,
+    });
+    const status = response.status;
+
+    if (error) {
+      throw new ApiError(status, {
+        code: error.code,
+        message: error.message,
+      });
+    }
+
+    return ensureLoginResponse(data, status);
   },
 
   /**

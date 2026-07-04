@@ -117,3 +117,50 @@
 - Keep API calls out of `LoginForm`; it remains a visual form with delegated submission.
 - Keep access tokens in the in-memory auth store only.
 - Do not implement MFA, SSO, biometrics, or password reset flows as part of Phase 5.
+
+---
+
+## Phase 6: MFA Challenge Flow
+
+**Purpose**: Complete the Super Admin MFA challenge step when credential login returns an MFA token.
+
+- [x] T011 [US5] Create `src/features/auth/components/mfa-challenge-form.tsx` with React Hook Form, `zodResolver(mfaSchema)`, an `mfaToken` prop, TOTP code input, delegated `onSubmit`, and `isLoading`.
+- [x] T012 [P] [US5] Add component tests in `src/features/auth/components/mfa-challenge-form.test.tsx` for valid submit payload, validation errors, and loading disabled state.
+- [x] T013 Add `verifyMfa()` to `src/features/auth/services/auth.service.ts` that calls `POST /auth/mfa/verify` with `{ mfa_token, method: 'totp', code }`, returns the typed response, and throws `ApiError` for backend errors or empty responses.
+- [x] T014 [P] Add service tests in `src/features/auth/services/auth.service.test.ts` for `verifyMfa()` success, expected request payload, backend error, and empty response paths.
+- [x] T015 Create `src/features/auth/hooks/use-verify-mfa.ts` using TanStack Query `useMutation`; on successful `access_token`, update `useAuthStore` and redirect to `/dashboard`; on verification failure, show a clear MFA verification error.
+- [x] T016 Update `src/features/auth/hooks/use-login.ts` so credential-login success with `mfa_token` exposes or returns the MFA challenge state without storing an access token or redirecting.
+- [x] T017 Update `src/app/(auth)/login/page.tsx` to conditionally render `MfaChallengeForm` instead of `LoginForm` when an MFA challenge token is present, and wire `useVerifyMfa()` submit/loading state into the MFA form.
+- [x] T018 [P] Add hook or route-level tests verifying `mfa_token` switches the login page to the MFA challenge, successful MFA verification stores the access token and redirects to `/dashboard`, and failed verification remains on the challenge.
+
+**Checkpoint**: A Super Admin whose credential login requires MFA sees the TOTP challenge, can verify it, receives an in-memory access token, and lands on the dashboard.
+
+---
+
+## Phase 6 Dependencies & Execution Order
+
+- T011 depends on T001 because it uses the shared MFA validation schema.
+- T012 depends on T011.
+- T013 depends on T004 because it extends the existing auth service.
+- T014 depends on T013 and may run independently from page wiring after the service signature is defined.
+- T015 depends on T013, T002, and the project toast provider.
+- T016 depends on T009 and the agreed login response shape that can include `mfa_token`.
+- T017 depends on T011, T015, and T016.
+- T018 depends on T015, T016, and T017.
+
+## Phase 6 Implementation Strategy
+
+1. Complete T011.
+2. Complete T013.
+3. Complete T015.
+4. Complete T016.
+5. Complete T017.
+6. Add T012, T014, and T018 coverage.
+7. Validate with `pnpm typecheck`, targeted auth service tests, and relevant component or route tests.
+
+## Phase 6 Notes
+
+- Keep API calls out of `MfaChallengeForm`; it remains a visual form with delegated submission.
+- Keep access tokens in the in-memory auth store only.
+- MFA scope is limited to TOTP verification for this phase; SSO, biometrics, backup codes, and MFA enrollment are out of scope.
+- The old standalone `/mfa-verification` page is removed so the login MFA challenge is the only MFA verification surface.
