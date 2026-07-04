@@ -31,4 +31,4 @@
 
 ## Notes
 
-- Specification is narrow and scoped to frontend Zod schemas only.
+- Specification has been extended through Phase 4 for the auth store, guard, silent refresh interceptor, and login UI component while keeping API submission outside the visual form.
