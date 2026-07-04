@@ -73,6 +73,20 @@ As an admin, I want the login screen to submit my email and password and start a
 
 ---
 
+### User Story 5 - Complete MFA Challenge (Priority: P1)
+
+As a Super Admin whose credentials require MFA, I want to enter my authenticator-app code after password login so that I can complete secure access to the admin portal.
+
+**Why this priority**: Super Admin access requires the strongest authentication path, and credential login is incomplete when the backend requires MFA.
+
+**Independent Test**: The MFA challenge can be tested by simulating a login result that requires MFA, submitting valid and invalid authenticator codes, and confirming session state, redirect behavior, and validation feedback.
+
+**Acceptance Scenarios**:
+
+1. **Given** credential login succeeds but requires MFA, **When** the login screen receives an MFA challenge token, **Then** the login screen shows the MFA challenge instead of the credential login form.
+2. **Given** the MFA challenge is displayed, **When** the Super Admin submits a valid authenticator code, **Then** the application completes authentication, stores the access token for the current session, and sends the Super Admin to the dashboard.
+3. **Given** the MFA challenge is displayed, **When** the Super Admin submits an invalid authenticator code, **Then** the application remains on the MFA challenge and shows a clear verification error.
+
 ## Requirements
 
 ### Functional Requirements
@@ -94,6 +108,12 @@ As an admin, I want the login screen to submit my email and password and start a
 - **FR-015**: When credential login succeeds with an access token, the application MUST redirect the admin to `/dashboard`.
 - **FR-016**: When credential login fails because the account is locked, the application MUST show a specific account-locked error message.
 - **FR-017**: When credential login fails for any other authentication error, the application MUST show the generic message "Invalid email or password".
+- **FR-018**: When credential login succeeds with an MFA challenge token instead of an access token, the application MUST present an MFA challenge step on the login screen.
+- **FR-019**: The MFA challenge step MUST accept and validate a time-based one-time password code before attempting verification.
+- **FR-020**: The Authentication feature MUST provide MFA verification behavior that submits the challenge token, the TOTP method, and the entered code to the backend verification endpoint.
+- **FR-021**: When MFA verification succeeds with an access token, the application MUST update the current in-memory auth session.
+- **FR-022**: When MFA verification succeeds with an access token, the application MUST redirect the Super Admin to `/dashboard`.
+- **FR-023**: When MFA verification fails, the application MUST keep the Super Admin on the MFA challenge step and show a clear verification error.
 
 ## Success Criteria
 
@@ -110,10 +130,16 @@ As an admin, I want the login screen to submit my email and password and start a
 - **SC-009**: A successful credential-login response with an access token results in the token being available in the current auth session.
 - **SC-010**: A successful credential-login response with an access token redirects the admin to the dashboard.
 - **SC-011**: A locked-account credential-login failure displays a locked-account message, while other authentication failures display "Invalid email or password".
+- **SC-012**: A credential-login response that requires MFA displays the MFA challenge step without losing the challenge token.
+- **SC-013**: A valid MFA challenge completion results in the access token being available in the current auth session.
+- **SC-014**: A valid MFA challenge completion redirects the Super Admin to the dashboard.
+- **SC-015**: Invalid MFA code submissions keep the Super Admin on the challenge step and display a verification error.
 
 ## Assumptions
 
 - Zod is already installed and is the project's validation library.
 - Shared primitive schemas (email, strong password) exist in `src/lib/validation/primitives.ts` and should be reused where appropriate.
 - Authentication API calls are intentionally outside the login form component and will be handled by the consuming route or hook.
-- The backend login response includes an access token when credential login is complete and successful.
+- The backend login response includes an access token when credential login is complete and successful, or an MFA challenge token when an additional verification step is required.
+- MFA verification for this phase uses authenticator-app TOTP codes only; other MFA methods are outside this phase.
+- The MFA challenge is part of the `/login` flow and does not use a separate MFA verification route.

@@ -9,7 +9,7 @@ export const loginSchema = z.object({
 });
 
 export const mfaSchema = z.object({
-  code: z.string().min(1, "Code is required"),
+  code: z.string().regex(/^\d{6}$/, "Enter the 6-digit verification code"),
 });
 
 export const passwordResetRequestSchema = z.object({
