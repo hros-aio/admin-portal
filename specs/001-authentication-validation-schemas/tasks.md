@@ -81,3 +81,39 @@
 - T002/T003 scope is limited to the auth store and layout guard; no pages, routing changes, API client changes, or authentication business logic.
 - T004 scope is limited to the auth service and existing auth middleware; no pages, routing changes, or new API client code.
 - T005 scope is limited to the visual login form; no API calls or route wiring.
+
+---
+
+## Phase 5: Login Business Logic & Hook
+
+**Purpose**: Connect the reusable login form to the credential-login API through feature-scoped business logic.
+
+- [x] T007 Add `login()` to `src/features/auth/services/auth.service.ts` that calls `POST /v1/auth/login`, returns the typed login response, and throws `ApiError` for backend errors or empty responses.
+- [x] T008 [P] Add service tests in `src/features/auth/services/auth.service.test.ts` for `login()` success, backend error, and empty response paths.
+- [x] T009 Create `src/features/auth/hooks/use-login.ts` using TanStack Query `useMutation`; on successful `access_token`, update `useAuthStore` and redirect to `/dashboard`; on `ACCOUNT_LOCKED`, show the locked-account toast; otherwise show "Invalid email or password".
+- [x] T010 Wire `useLogin()` into `src/app/(auth)/login/page.tsx` and pass mutation submit/loading state to `LoginForm`.
+
+**Checkpoint**: Submitting the login page uses the credential-login API, stores the access token in memory on success, redirects to the dashboard, and shows the required toast messages on failure.
+
+---
+
+## Phase 5 Dependencies & Execution Order
+
+- T007 depends on T004 because it extends the existing auth service.
+- T008 depends on T007 and may run independently from page wiring after the service signature is defined.
+- T009 depends on T007, T002, and the project toast provider.
+- T010 depends on T005 and T009.
+
+## Phase 5 Implementation Strategy
+
+1. Complete T007.
+2. Complete T008.
+3. Complete T009.
+4. Complete T010.
+5. Validate with `pnpm typecheck`, targeted auth service tests, and relevant hook or page tests.
+
+## Phase 5 Notes
+
+- Keep API calls out of `LoginForm`; it remains a visual form with delegated submission.
+- Keep access tokens in the in-memory auth store only.
+- Do not implement MFA, SSO, biometrics, or password reset flows as part of Phase 5.

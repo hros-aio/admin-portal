@@ -6,7 +6,11 @@ import { authMiddleware } from "./auth-middleware";
 import { csrfMiddleware } from "./csrf-middleware";
 import { requestIdMiddleware } from "./request-id-middleware";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, "").replace(/\/v1$/, "");
+}
+
+const baseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL ?? "");
 
 export const rawClient = createClient<paths>({
   baseUrl,
