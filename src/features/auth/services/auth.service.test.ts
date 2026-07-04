@@ -124,6 +124,79 @@ describe("authService", () => {
     });
   });
 
+  describe("createBiometricChallenge", () => {
+    it("returns the biometric challenge response", async () => {
+      mockPostResult({
+        data: { challenge: "challenge", credential_id: "credential-id" },
+        response: new Response(null, { status: 200 }),
+      });
+
+      await expect(
+        authService.createBiometricChallenge({ email: "admin@hros.com" })
+      ).resolves.toEqual({
+        challenge: "challenge",
+        credential_id: "credential-id",
+      });
+
+      expect(mockPost).toHaveBeenCalledWith("/v1/auth/biometric/challenge", {
+        body: { email: "admin@hros.com" },
+      });
+    });
+
+    it("throws ApiError when the biometric challenge response body is empty", async () => {
+      mockPostResult({
+        response: new Response(null, { status: 200 }),
+      });
+
+      await expect(
+        authService.createBiometricChallenge({ email: "admin@hros.com" })
+      ).rejects.toBeInstanceOf(ApiError);
+    });
+  });
+
+  describe("verifyBiometric", () => {
+    const payload = {
+      email: "admin@hros.com",
+      credential_id: "credential-id",
+      authenticator_data: "authenticator-data",
+      client_data_json: "client-data-json",
+      signature: "signature",
+      remember_me: true,
+    };
+
+    it("returns the login response from successful biometric verification", async () => {
+      mockPostResult({
+        data: { access_token: "biometric-access-token" },
+        response: new Response(null, { status: 200 }),
+      });
+
+      await expect(authService.verifyBiometric(payload)).resolves.toEqual({
+        access_token: "biometric-access-token",
+      });
+
+      expect(mockPost).toHaveBeenCalledWith("/v1/auth/biometric/verify", {
+        body: payload,
+      });
+    });
+
+    it("throws ApiError when biometric verification returns an error", async () => {
+      mockPostResult({
+        error: { code: "UNAUTHORIZED", message: "Verification failed" },
+        response: new Response(null, { status: 401 }),
+      });
+
+      await expect(authService.verifyBiometric(payload)).rejects.toBeInstanceOf(ApiError);
+    });
+
+    it("throws ApiError when the biometric verification response body is empty", async () => {
+      mockPostResult({
+        response: new Response(null, { status: 200 }),
+      });
+
+      await expect(authService.verifyBiometric(payload)).rejects.toBeInstanceOf(ApiError);
+    });
+  });
+
   describe("refreshSession", () => {
     it("returns the access token from a successful refresh", async () => {
       mockPostResult({

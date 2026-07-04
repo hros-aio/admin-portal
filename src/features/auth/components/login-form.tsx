@@ -11,16 +11,33 @@ import { AuthInput } from "./auth-input";
 import { ArrowRightIcon, FingerprintIcon, MailIcon } from "./icons";
 import { PasswordField } from "./password-field";
 
+export interface BiometricLoginFormInput {
+  email: string;
+  remember_me: boolean;
+}
+
 export interface LoginFormProps {
   onSubmit: SubmitHandler<LoginInput>;
+  onSsoLogin?: () => void;
+  onBiometricLogin?: (values: BiometricLoginFormInput) => void;
   isLoading?: boolean;
+  isBiometricLoading?: boolean;
   className?: string;
 }
 
-export function LoginForm({ onSubmit, isLoading = false, className }: LoginFormProps) {
+export function LoginForm({
+  onSubmit,
+  onSsoLogin,
+  onBiometricLogin,
+  isLoading = false,
+  isBiometricLoading = false,
+  className,
+}: LoginFormProps) {
   const {
     register,
     handleSubmit,
+    getValues,
+    trigger,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -31,16 +48,25 @@ export function LoginForm({ onSubmit, isLoading = false, className }: LoginFormP
     },
   });
   const submit = handleSubmit(onSubmit);
+  const isBusy = isLoading || isBiometricLoading;
+
+  const handleBiometricLogin = async () => {
+    const isEmailValid = await trigger("email");
+    if (!isEmailValid) return;
+
+    const { email, remember_me } = getValues();
+    onBiometricLogin?.({ email, remember_me });
+  };
 
   return (
     <form
       className={cn("flex flex-col gap-6", className)}
-      aria-busy={isLoading}
+      aria-busy={isBusy}
       onSubmit={(event: FormEvent<HTMLFormElement>) => {
         void submit(event);
       }}
     >
-      <fieldset className="contents" disabled={isLoading}>
+      <fieldset className="contents" disabled={isBusy}>
         <AuthInput
           label="Email"
           type="email"
@@ -72,7 +98,7 @@ export function LoginForm({ onSubmit, isLoading = false, className }: LoginFormP
           type="submit"
           size="large"
           isLoading={isLoading}
-          disabled={isLoading}
+          disabled={isBusy}
           rightIcon={<ArrowRightIcon className="h-4 w-4" />}
         >
           Sign In
@@ -87,7 +113,13 @@ export function LoginForm({ onSubmit, isLoading = false, className }: LoginFormP
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <AuthButton type="button" variant="outline" size="default" disabled={isLoading}>
+          <AuthButton
+            type="button"
+            variant="outline"
+            size="default"
+            disabled={isBusy}
+            onClick={onSsoLogin}
+          >
             Continue with SSO
           </AuthButton>
           <AuthButton
@@ -95,7 +127,11 @@ export function LoginForm({ onSubmit, isLoading = false, className }: LoginFormP
             variant="outline"
             size="default"
             leftIcon={<FingerprintIcon className="h-4 w-4" />}
-            disabled={isLoading}
+            isLoading={isBiometricLoading}
+            disabled={isBusy}
+            onClick={() => {
+              void handleBiometricLogin();
+            }}
           >
             Use Biometrics
           </AuthButton>

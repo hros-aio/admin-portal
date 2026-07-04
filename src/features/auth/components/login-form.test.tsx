@@ -58,4 +58,44 @@ describe("LoginForm", () => {
     expect(screen.getByRole("button", { name: "Continue with SSO" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Use Biometrics" })).toBeDisabled();
   });
+
+  it("calls the SSO handler from the alternative login button", async () => {
+    const user = userEvent.setup();
+    const onSsoLogin = vi.fn();
+
+    render(<LoginForm onSubmit={vi.fn()} onSsoLogin={onSsoLogin} />);
+
+    await user.click(screen.getByRole("button", { name: "Continue with SSO" }));
+
+    expect(onSsoLogin).toHaveBeenCalledOnce();
+  });
+
+  it("calls the biometric handler with email and remember-me values", async () => {
+    const user = userEvent.setup();
+    const onBiometricLogin = vi.fn();
+
+    render(<LoginForm onSubmit={vi.fn()} onBiometricLogin={onBiometricLogin} />);
+
+    await user.type(screen.getByLabelText("Email"), "admin@example.com");
+    await user.click(screen.getByLabelText("Keep me logged in for 30 days"));
+    await user.click(screen.getByRole("button", { name: "Use Biometrics" }));
+
+    await waitFor(() => {
+      expect(onBiometricLogin).toHaveBeenCalledWith({
+        email: "admin@example.com",
+        remember_me: true,
+      });
+    });
+  });
+
+  it("validates email before invoking biometric login", async () => {
+    const user = userEvent.setup();
+    const onBiometricLogin = vi.fn();
+
+    render(<LoginForm onSubmit={vi.fn()} onBiometricLogin={onBiometricLogin} />);
+
+    await user.click(screen.getByRole("button", { name: "Use Biometrics" }));
+
+    expect(onBiometricLogin).not.toHaveBeenCalled();
+  });
 });

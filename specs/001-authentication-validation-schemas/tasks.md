@@ -164,3 +164,45 @@
 - Keep access tokens in the in-memory auth store only.
 - MFA scope is limited to TOTP verification for this phase; SSO, biometrics, backup codes, and MFA enrollment are out of scope.
 - The old standalone `/mfa-verification` page is removed so the login MFA challenge is the only MFA verification surface.
+
+---
+
+## Phase 7: SSO & Biometric Adapters
+
+**Purpose**: Wire the existing alternative-login controls to SAML SSO initiation and WebAuthn biometric verification without adding callback routes or enrollment flows.
+
+- [x] T019 [US6] Update `src/features/auth/components/login-form.tsx` to accept delegated `onSsoLogin` and `onBiometricLogin` handlers, wire the existing "Continue with SSO" and "Use Biometrics" buttons to them, and preserve disabled/loading behavior.
+- [x] T020 [P] [US6] Update `src/features/auth/components/login-form.test.tsx` for SSO handler invocation, biometric handler invocation, and disabled alternative-login controls while loading.
+- [x] T021 Add biometric verification behavior to `src/features/auth/services/auth.service.ts` that submits the WebAuthn credential assertion to `POST /auth/biometric/verify`, returns the typed login response, and throws `ApiError` for backend errors or empty responses.
+- [x] T022 [P] Add service tests in `src/features/auth/services/auth.service.test.ts` for biometric verification success, expected request payload, backend error, and empty response paths.
+- [x] T023 Create `src/features/auth/hooks/use-biometric-login.ts` that checks browser credential support, runs `navigator.credentials.get()`, submits the credential assertion through the auth service, stores `access_token` in `useAuthStore`, redirects to `/dashboard`, and shows clear errors for unsupported, cancelled, or failed biometric attempts.
+- [x] T024 Update `src/app/(auth)/login/page.tsx` to pass an SSO full-redirect handler for `/auth/sso/initiate?provider=saml` and pass `useBiometricLogin()` submit/loading state into `LoginForm`; add hook or route-level tests for SSO redirect, unsupported biometric support, and successful biometric verification.
+
+**Checkpoint**: The login form starts SAML SSO with a full browser redirect and starts biometric login through WebAuthn, handling unsupported browsers and successful backend verification.
+
+---
+
+## Phase 7 Dependencies & Execution Order
+
+- T019 depends on T005 because it extends the existing reusable login form.
+- T020 depends on T019.
+- T021 depends on T007 because it extends the existing auth service.
+- T022 depends on T021 and may run independently from login page wiring after the service signature is defined.
+- T023 depends on T021, T002, and the project toast provider.
+- T024 depends on T019 and T023.
+
+## Phase 7 Implementation Strategy
+
+1. Complete T019.
+2. Complete T021.
+3. Complete T023.
+4. Complete T024.
+5. Add T020 and T022 coverage plus route or hook coverage for T024 behavior.
+6. Validate with `pnpm typecheck`, targeted auth service tests, login form tests, and relevant hook or route tests.
+
+## Phase 7 Notes
+
+- Keep API calls out of `LoginForm`; it remains a visual form with delegated alternative-login actions.
+- SSO scope is limited to full browser redirect to `/auth/sso/initiate?provider=saml`; do not add an SSO callback route.
+- Biometric scope is limited to WebAuthn credential retrieval and backend verification; do not implement enrollment or credential management.
+- Keep access tokens in the in-memory auth store only.
