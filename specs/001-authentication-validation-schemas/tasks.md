@@ -176,7 +176,7 @@
 - [x] T021 Add biometric verification behavior to `src/features/auth/services/auth.service.ts` that submits the WebAuthn credential assertion to `POST /auth/biometric/verify`, returns the typed login response, and throws `ApiError` for backend errors or empty responses.
 - [x] T022 [P] Add service tests in `src/features/auth/services/auth.service.test.ts` for biometric verification success, expected request payload, backend error, and empty response paths.
 - [x] T023 Create `src/features/auth/hooks/use-biometric-login.ts` that checks browser credential support, runs `navigator.credentials.get()`, submits the credential assertion through the auth service, stores `access_token` in `useAuthStore`, redirects to `/dashboard`, and shows clear errors for unsupported, cancelled, or failed biometric attempts.
-- [x] T024 Update `src/app/(auth)/login/page.tsx` to pass an SSO full-redirect handler for `/auth/sso/initiate?provider=saml` and pass `useBiometricLogin()` submit/loading state into `LoginForm`; add hook or route-level tests for SSO redirect, unsupported biometric support, and successful biometric verification.
+- [x] T024 Update `src/app/(auth)/login/page.tsx` to pass an SSO full-redirect handler for `/auth/sso/initiate?provider=saml` and pass `useBiometricLogin()` submit/loading state into `LoginForm`; add hook or route-level tests for SSO redirect, unsupported biometric support, successful biometric verification, MFA step-up, and failed or cancelled biometric attempts.
 
 **Checkpoint**: The login form starts SAML SSO with a full browser redirect and starts biometric login through WebAuthn, handling unsupported browsers and successful backend verification.
 

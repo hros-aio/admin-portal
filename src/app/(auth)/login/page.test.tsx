@@ -10,12 +10,14 @@ import { useLogin } from "@/features/auth/hooks/use-login";
 import { useVerifyMfa } from "@/features/auth/hooks/use-verify-mfa";
 
 type UseLoginOptions = Parameters<typeof useLogin>[0];
+type UseBiometricLoginOptions = Parameters<typeof useBiometricLogin>[0];
 
 const loginMutate = vi.fn();
 const verifyMfaMutate = vi.fn();
 const biometricMutate = vi.fn();
 const locationAssign = vi.fn();
 let loginOptions: UseLoginOptions;
+let biometricOptions: UseBiometricLoginOptions;
 
 vi.mock("@/features/auth/hooks/use-login", () => ({
   useLogin: vi.fn((options: UseLoginOptions) => {
@@ -36,10 +38,14 @@ vi.mock("@/features/auth/hooks/use-verify-mfa", () => ({
 }));
 
 vi.mock("@/features/auth/hooks/use-biometric-login", () => ({
-  useBiometricLogin: vi.fn(() => ({
-    mutate: biometricMutate,
-    isPending: false,
-  })),
+  useBiometricLogin: vi.fn((options: UseBiometricLoginOptions) => {
+    biometricOptions = options;
+
+    return {
+      mutate: biometricMutate,
+      isPending: false,
+    };
+  }),
 }));
 
 describe("LoginPage", () => {
@@ -52,6 +58,7 @@ describe("LoginPage", () => {
     vi.mocked(useVerifyMfa).mockClear();
     vi.mocked(useBiometricLogin).mockClear();
     loginOptions = undefined;
+    biometricOptions = undefined;
     Object.defineProperty(window, "location", {
       configurable: true,
       value: {
@@ -127,5 +134,18 @@ describe("LoginPage", () => {
         remember_me: true,
       });
     });
+  });
+
+  it("switches to MFA when biometric login returns an MFA token", async () => {
+    render(<LoginPage />);
+
+    act(() => {
+      biometricOptions?.onMfaRequired?.("biometric-mfa-token");
+    });
+
+    expect(
+      await screen.findByRole("heading", { name: "Two-Factor Verification" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign In" })).not.toBeInTheDocument();
   });
 });

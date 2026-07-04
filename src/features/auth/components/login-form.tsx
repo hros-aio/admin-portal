@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { FormEvent } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 
+import type { BiometricLoginInput } from "@/features/auth/hooks/use-biometric-login";
 import { loginSchema, type LoginInput } from "@/features/auth/schemas/auth.schema";
 import { cn } from "@/lib/utils";
 import { AuthButton } from "./auth-button";
@@ -11,15 +12,10 @@ import { AuthInput } from "./auth-input";
 import { ArrowRightIcon, FingerprintIcon, MailIcon } from "./icons";
 import { PasswordField } from "./password-field";
 
-export interface BiometricLoginFormInput {
-  email: string;
-  remember_me: boolean;
-}
-
 export interface LoginFormProps {
   onSubmit: SubmitHandler<LoginInput>;
   onSsoLogin?: () => void;
-  onBiometricLogin?: (values: BiometricLoginFormInput) => void;
+  onBiometricLogin?: (values: BiometricLoginInput) => void;
   isLoading?: boolean;
   isBiometricLoading?: boolean;
   className?: string;

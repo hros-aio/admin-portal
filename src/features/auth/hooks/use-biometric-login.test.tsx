@@ -52,8 +52,8 @@ function textBuffer(value: string): ArrayBuffer {
   return buffer;
 }
 
-function BiometricLoginHarness() {
-  const biometricLogin = useBiometricLogin();
+function BiometricLoginHarness({ onMfaRequired }: { onMfaRequired?: (mfaToken: string) => void }) {
+  const biometricLogin = useBiometricLogin(onMfaRequired ? { onMfaRequired } : undefined);
 
   return (
     <button
@@ -166,5 +166,110 @@ describe("useBiometricLogin", () => {
       expect(useAuthStore.getState().accessToken).toBe("biometric-access-token");
       expect(push).toHaveBeenCalledWith("/dashboard");
     });
+  });
+
+  it("forwards MFA-required biometric responses without storing a token or redirecting", async () => {
+    const user = userEvent.setup();
+    const onMfaRequired = vi.fn();
+    mockCreateBiometricChallenge.mockResolvedValue({
+      challenge: "Y2hhbGxlbmdl",
+      credential_id: "Y3JlZGVudGlhbC1pZA",
+    });
+    credentialGet.mockResolvedValue({
+      rawId: textBuffer("raw-id"),
+      response: {
+        authenticatorData: textBuffer("authenticator-data"),
+        clientDataJSON: textBuffer("client-data-json"),
+        signature: textBuffer("signature"),
+      },
+    });
+    mockVerifyBiometric.mockResolvedValue({ mfa_required: true, mfa_token: "mfa-token" });
+
+    renderWithQueryClient(<BiometricLoginHarness onMfaRequired={onMfaRequired} />);
+
+    await user.click(screen.getByRole("button", { name: "Use Biometrics" }));
+
+    await waitFor(() => {
+      expect(onMfaRequired).toHaveBeenCalledWith("mfa-token");
+    });
+    expect(useAuthStore.getState().accessToken).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("shows a generic biometric error when challenge creation fails", async () => {
+    const user = userEvent.setup();
+    mockCreateBiometricChallenge.mockRejectedValue(new Error("Challenge failed"));
+
+    renderWithQueryClient(<BiometricLoginHarness />);
+
+    await user.click(screen.getByRole("button", { name: "Use Biometrics" }));
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Biometric sign-in failed",
+        "Try again or use another sign-in method."
+      );
+    });
+    expect(mockVerifyBiometric).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().accessToken).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("shows a generic biometric error when verification fails", async () => {
+    const user = userEvent.setup();
+    mockCreateBiometricChallenge.mockResolvedValue({
+      challenge: "Y2hhbGxlbmdl",
+      credential_id: "Y3JlZGVudGlhbC1pZA",
+    });
+    credentialGet.mockResolvedValue({
+      rawId: textBuffer("raw-id"),
+      response: {
+        authenticatorData: textBuffer("authenticator-data"),
+        clientDataJSON: textBuffer("client-data-json"),
+        signature: textBuffer("signature"),
+      },
+    });
+    mockVerifyBiometric.mockRejectedValue(new Error("Verification failed"));
+
+    renderWithQueryClient(<BiometricLoginHarness />);
+
+    await user.click(screen.getByRole("button", { name: "Use Biometrics" }));
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Biometric sign-in failed",
+        "Try again or use another sign-in method."
+      );
+    });
+    expect(useAuthStore.getState().accessToken).toBeNull();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("shows a generic biometric error when the credential prompt is cancelled", async () => {
+    const user = userEvent.setup();
+    mockCreateBiometricChallenge.mockResolvedValue({
+      challenge: "Y2hhbGxlbmdl",
+      credential_id: "Y3JlZGVudGlhbC1pZA",
+    });
+    credentialGet.mockResolvedValue({
+      rawId: textBuffer("raw-id"),
+      response: {
+        clientDataJSON: textBuffer("client-data-json"),
+      },
+    });
+
+    renderWithQueryClient(<BiometricLoginHarness />);
+
+    await user.click(screen.getByRole("button", { name: "Use Biometrics" }));
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Biometric sign-in failed",
+        "Try again or use another sign-in method."
+      );
+    });
+    expect(mockVerifyBiometric).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().accessToken).toBeNull();
+    expect(push).not.toHaveBeenCalled();
   });
 });

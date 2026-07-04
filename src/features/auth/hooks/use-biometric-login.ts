@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import {
   authService,
   type BiometricChallengeResponse,
-  type BiometricVerifyRequest,
   type LoginResponse,
+  type VerifyBiometricInput,
 } from "@/features/auth/services/auth.service";
 import { useAuthStore } from "@/features/auth/stores/auth-store";
 import type { ApiError } from "@/lib/api/result";
@@ -16,6 +16,10 @@ import { useToast } from "@/lib/toast";
 export interface BiometricLoginInput {
   email: string;
   remember_me: boolean;
+}
+
+interface UseBiometricLoginOptions {
+  onMfaRequired?: (mfaToken: string) => void;
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -94,7 +98,7 @@ function createCredentialRequestOptions(
 function createVerifyPayload(
   input: BiometricLoginInput,
   credential: PublicKeyCredential & { response: AuthenticatorAssertionResponse }
-): BiometricVerifyRequest {
+): VerifyBiometricInput {
   return {
     email: input.email,
     credential_id: encodeBase64Url(credential.rawId),
@@ -105,7 +109,7 @@ function createVerifyPayload(
   };
 }
 
-export function useBiometricLogin() {
+export function useBiometricLogin(options: UseBiometricLoginOptions = {}) {
   const router = useRouter();
   const toast = useToast();
   const setToken = useAuthStore((state) => state.setToken);
@@ -131,6 +135,11 @@ export function useBiometricLogin() {
       if (response.access_token) {
         setToken(response.access_token);
         router.push("/dashboard");
+        return;
+      }
+
+      if (response.mfa_token) {
+        options.onMfaRequired?.(response.mfa_token);
       }
     },
     onError: (error) => {

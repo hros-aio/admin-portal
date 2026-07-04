@@ -7,6 +7,7 @@ export type LoginResponse = components["schemas"]["LoginResponse"];
 type MfaVerifyRequest = components["schemas"]["MFAVerifyRequest"];
 export type BiometricChallengeResponse = components["schemas"]["BiometricChallengeResponse"];
 export type BiometricVerifyRequest = components["schemas"]["BiometricVerifyRequest"];
+export type VerifyBiometricInput = BiometricVerifyRequest;
 
 export interface VerifyMfaInput {
   mfa_token: string;
@@ -17,25 +18,11 @@ export interface BiometricChallengeInput {
   email: string;
 }
 
-function ensureLoginResponse(data: LoginResponse | undefined, status: number): LoginResponse {
+function ensureResponseBody<T>(data: T | undefined, status: number, message: string): T {
   if (!data) {
     throw new ApiError(status, {
       code: "EMPTY_RESPONSE",
-      message: "Authentication response did not contain a response body.",
-    });
-  }
-
-  return data;
-}
-
-function ensureBiometricChallengeResponse(
-  data: BiometricChallengeResponse | undefined,
-  status: number
-): BiometricChallengeResponse {
-  if (!data) {
-    throw new ApiError(status, {
-      code: "EMPTY_RESPONSE",
-      message: "Biometric challenge response did not contain a response body.",
+      message,
     });
   }
 
@@ -56,7 +43,11 @@ export const authService = {
       });
     }
 
-    return ensureLoginResponse(data, status);
+    return ensureResponseBody(
+      data,
+      status,
+      "Authentication response did not contain a response body."
+    );
   },
 
   async verifyMfa(values: VerifyMfaInput): Promise<LoginResponse> {
@@ -78,7 +69,11 @@ export const authService = {
       });
     }
 
-    return ensureLoginResponse(data, status);
+    return ensureResponseBody(
+      data,
+      status,
+      "Authentication response did not contain a response body."
+    );
   },
 
   async createBiometricChallenge(
@@ -96,10 +91,14 @@ export const authService = {
       });
     }
 
-    return ensureBiometricChallengeResponse(data, status);
+    return ensureResponseBody(
+      data,
+      status,
+      "Biometric challenge response did not contain a response body."
+    );
   },
 
-  async verifyBiometric(values: BiometricVerifyRequest): Promise<LoginResponse> {
+  async verifyBiometric(values: VerifyBiometricInput): Promise<LoginResponse> {
     const { data, error, response } = await rawClient.POST("/v1/auth/biometric/verify", {
       body: values,
     });
@@ -112,7 +111,11 @@ export const authService = {
       });
     }
 
-    return ensureLoginResponse(data, status);
+    return ensureResponseBody(
+      data,
+      status,
+      "Authentication response did not contain a response body."
+    );
   },
 
   /**

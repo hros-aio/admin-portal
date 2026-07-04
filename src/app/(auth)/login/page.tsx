@@ -21,7 +21,9 @@ export default function LoginPage() {
     onMfaRequired: setMfaToken,
   });
   const verifyMfa = useVerifyMfa();
-  const biometricLogin = useBiometricLogin();
+  const biometricLogin = useBiometricLogin({
+    onMfaRequired: setMfaToken,
+  });
 
   if (mfaToken) {
     return (
