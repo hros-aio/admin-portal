@@ -9,8 +9,11 @@ import { AtmosphericBackground } from "@/features/auth/components/atmospheric-ba
 import { ShieldIcon } from "@/features/auth/components/icons";
 import { LoginForm } from "@/features/auth/components/login-form";
 import { MfaChallengeForm } from "@/features/auth/components/mfa-challenge-form";
+import { useBiometricLogin } from "@/features/auth/hooks/use-biometric-login";
 import { useLogin } from "@/features/auth/hooks/use-login";
 import { useVerifyMfa } from "@/features/auth/hooks/use-verify-mfa";
+
+const SSO_INITIATE_URL = "/auth/sso/initiate?provider=saml";
 
 export default function LoginPage() {
   const [mfaToken, setMfaToken] = useState<string | null>(null);
@@ -18,6 +21,9 @@ export default function LoginPage() {
     onMfaRequired: setMfaToken,
   });
   const verifyMfa = useVerifyMfa();
+  const biometricLogin = useBiometricLogin({
+    onMfaRequired: setMfaToken,
+  });
 
   if (mfaToken) {
     return (
@@ -83,7 +89,14 @@ export default function LoginPage() {
                 onSubmit={(values) => {
                   login.mutate(values);
                 }}
+                onSsoLogin={() => {
+                  window.location.assign(SSO_INITIATE_URL);
+                }}
+                onBiometricLogin={(values) => {
+                  biometricLogin.mutate(values);
+                }}
                 isLoading={login.isPending}
+                isBiometricLoading={biometricLogin.isPending}
               />
             </AuthCard>
 

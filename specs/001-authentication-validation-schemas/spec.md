@@ -87,6 +87,24 @@ As a Super Admin whose credentials require MFA, I want to enter my authenticator
 2. **Given** the MFA challenge is displayed, **When** the Super Admin submits a valid authenticator code, **Then** the application completes authentication, stores the access token for the current session, and sends the Super Admin to the dashboard.
 3. **Given** the MFA challenge is displayed, **When** the Super Admin submits an invalid authenticator code, **Then** the application remains on the MFA challenge and shows a clear verification error.
 
+---
+
+### User Story 6 - Use Alternative Login Methods (Priority: P2)
+
+As an admin, I want to start SSO or biometric login from the login form so that I can authenticate with an organization-managed identity provider or a registered device credential instead of typing a password.
+
+**Why this priority**: Alternative login methods are already exposed on the login form and must initiate real authentication paths without expanding the credential, MFA, or callback flows.
+
+**Independent Test**: The alternative-login behavior can be tested by activating the SSO and biometric controls while confirming redirect behavior, unsupported-browser handling, backend verification submission, session state, and redirect behavior after biometric success.
+
+**Acceptance Scenarios**:
+
+1. **Given** an admin is on the login screen, **When** they activate "Continue with SSO", **Then** the browser performs a full-page redirect to the SAML SSO initiation endpoint.
+2. **Given** an admin is on the login screen in a browser without WebAuthn credential support, **When** they activate "Use Biometrics", **Then** the application shows a clear unsupported-browser message and does not attempt backend verification.
+3. **Given** an admin is on the login screen in a browser with WebAuthn credential support, **When** they complete the biometric prompt successfully, **Then** the application submits the credential assertion for backend verification.
+4. **Given** biometric verification succeeds with an access token, **When** the response is handled, **Then** the application stores the access token for the current session and sends the admin to the dashboard.
+5. **Given** biometric verification fails or the browser credential prompt is cancelled, **When** the error is handled, **Then** the application keeps the admin on the login screen and shows a clear biometric login error.
+
 ## Requirements
 
 ### Functional Requirements
@@ -114,6 +132,14 @@ As a Super Admin whose credentials require MFA, I want to enter my authenticator
 - **FR-021**: When MFA verification succeeds with an access token, the application MUST update the current in-memory auth session.
 - **FR-022**: When MFA verification succeeds with an access token, the application MUST redirect the Super Admin to `/dashboard`.
 - **FR-023**: When MFA verification fails, the application MUST keep the Super Admin on the MFA challenge step and show a clear verification error.
+- **FR-024**: The login form MUST expose the existing SSO and biometric controls as actionable controls without adding new login methods beyond SAML SSO and WebAuthn biometric login.
+- **FR-025**: When an admin activates SSO login, the application MUST perform a full browser redirect to `GET /auth/sso/initiate?provider=saml`.
+- **FR-026**: The Authentication feature MUST provide biometric-login behavior that starts the browser WebAuthn credential request flow from the login screen.
+- **FR-027**: If the browser does not support the required credential API, biometric login MUST show a clear unsupported-browser message and MUST NOT call backend verification.
+- **FR-028**: When the browser returns a biometric credential assertion, the Authentication feature MUST submit the assertion to `POST /auth/biometric/verify`.
+- **FR-029**: When biometric verification succeeds with an access token, the application MUST update the current in-memory auth session and redirect the admin to `/dashboard`.
+- **FR-030**: When biometric verification fails or the credential prompt is cancelled, the application MUST keep the admin on the login screen and show a clear biometric login error.
+- **FR-031**: The Authentication feature MUST NOT add an SSO callback route as part of this phase.
 
 ## Success Criteria
 
@@ -134,6 +160,11 @@ As a Super Admin whose credentials require MFA, I want to enter my authenticator
 - **SC-013**: A valid MFA challenge completion results in the access token being available in the current auth session.
 - **SC-014**: A valid MFA challenge completion redirects the Super Admin to the dashboard.
 - **SC-015**: Invalid MFA code submissions keep the Super Admin on the challenge step and display a verification error.
+- **SC-016**: Activating "Continue with SSO" from the login form changes the browser location to the SAML SSO initiation URL.
+- **SC-017**: In browsers without WebAuthn credential support, activating "Use Biometrics" displays an unsupported-browser message and makes zero biometric verification requests.
+- **SC-018**: In browsers with WebAuthn credential support, a successful credential assertion is submitted for biometric verification exactly once per activation.
+- **SC-019**: Successful biometric verification with an access token makes that token available in the current auth session and redirects the admin to the dashboard.
+- **SC-020**: Failed or cancelled biometric login attempts leave the admin on the login screen and display a biometric login error.
 
 ## Assumptions
 
@@ -143,3 +174,5 @@ As a Super Admin whose credentials require MFA, I want to enter my authenticator
 - The backend login response includes an access token when credential login is complete and successful, or an MFA challenge token when an additional verification step is required.
 - MFA verification for this phase uses authenticator-app TOTP codes only; other MFA methods are outside this phase.
 - The MFA challenge is part of the `/login` flow and does not use a separate MFA verification route.
+- SSO for this phase is limited to SAML initiation from the login screen; callback handling is owned outside this phase.
+- Biometric login for this phase uses browser WebAuthn credential retrieval and backend verification only; biometric enrollment and credential management are outside this phase.

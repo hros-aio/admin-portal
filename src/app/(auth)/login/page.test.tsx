@@ -5,14 +5,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { render, userEvent } from "@/tests/test-utils";
 import LoginPage from "./page";
+import { useBiometricLogin } from "@/features/auth/hooks/use-biometric-login";
 import { useLogin } from "@/features/auth/hooks/use-login";
 import { useVerifyMfa } from "@/features/auth/hooks/use-verify-mfa";
 
 type UseLoginOptions = Parameters<typeof useLogin>[0];
+type UseBiometricLoginOptions = Parameters<typeof useBiometricLogin>[0];
 
 const loginMutate = vi.fn();
 const verifyMfaMutate = vi.fn();
+const biometricMutate = vi.fn();
+const locationAssign = vi.fn();
 let loginOptions: UseLoginOptions;
+let biometricOptions: UseBiometricLoginOptions;
 
 vi.mock("@/features/auth/hooks/use-login", () => ({
   useLogin: vi.fn((options: UseLoginOptions) => {
@@ -32,13 +37,35 @@ vi.mock("@/features/auth/hooks/use-verify-mfa", () => ({
   })),
 }));
 
+vi.mock("@/features/auth/hooks/use-biometric-login", () => ({
+  useBiometricLogin: vi.fn((options: UseBiometricLoginOptions) => {
+    biometricOptions = options;
+
+    return {
+      mutate: biometricMutate,
+      isPending: false,
+    };
+  }),
+}));
+
 describe("LoginPage", () => {
   beforeEach(() => {
     loginMutate.mockReset();
     verifyMfaMutate.mockReset();
+    biometricMutate.mockReset();
+    locationAssign.mockReset();
     vi.mocked(useLogin).mockClear();
     vi.mocked(useVerifyMfa).mockClear();
+    vi.mocked(useBiometricLogin).mockClear();
     loginOptions = undefined;
+    biometricOptions = undefined;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: {
+        ...window.location,
+        assign: locationAssign,
+      },
+    });
   });
 
   it("switches from credential login to the MFA challenge when login returns an MFA token", async () => {
@@ -80,5 +107,45 @@ describe("LoginPage", () => {
     await user.click(await screen.findByRole("button", { name: "Cancel and Return to Login" }));
 
     expect(screen.getByRole("button", { name: "Sign In" })).toBeInTheDocument();
+  });
+
+  it("performs a full browser redirect when SSO is selected", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: "Continue with SSO" }));
+
+    expect(locationAssign).toHaveBeenCalledWith("/auth/sso/initiate?provider=saml");
+  });
+
+  it("passes biometric login values from the login form", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText("Email"), "admin@example.com");
+    await user.click(screen.getByLabelText("Keep me logged in for 30 days"));
+    await user.click(screen.getByRole("button", { name: "Use Biometrics" }));
+
+    await waitFor(() => {
+      expect(biometricMutate).toHaveBeenCalledWith({
+        email: "admin@example.com",
+        remember_me: true,
+      });
+    });
+  });
+
+  it("switches to MFA when biometric login returns an MFA token", async () => {
+    render(<LoginPage />);
+
+    act(() => {
+      biometricOptions?.onMfaRequired?.("biometric-mfa-token");
+    });
+
+    expect(
+      await screen.findByRole("heading", { name: "Two-Factor Verification" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign In" })).not.toBeInTheDocument();
   });
 });

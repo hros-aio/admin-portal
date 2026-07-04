@@ -6,7 +6,7 @@
 
 ## Summary
 
-Create a feature-scoped Zod schema file at `src/features/auth/schemas/auth.schema.ts` that defines and exports schemas and inferred types for login, MFA, password reset, and invitation acceptance forms. Additionally, implement an in-memory auth store, a layout guard that redirects unauthenticated users to `/login`, silent refresh request handling, a reusable visual login form component, credential-login business logic that connects the login page to the authentication API, and the MFA challenge flow required when Super Admin login returns an MFA challenge token.
+Create a feature-scoped Zod schema file at `src/features/auth/schemas/auth.schema.ts` that defines and exports schemas and inferred types for login, MFA, password reset, and invitation acceptance forms. Additionally, implement an in-memory auth store, a layout guard that redirects unauthenticated users to `/login`, silent refresh request handling, a reusable visual login form component, credential-login business logic that connects the login page to the authentication API, the MFA challenge flow required when Super Admin login returns an MFA challenge token, and bounded SSO/biometric login adapters for the existing alternative-login controls.
 
 ## Technical Context
 
@@ -26,7 +26,7 @@ Create a feature-scoped Zod schema file at `src/features/auth/schemas/auth.schem
 
 **Constraints**: Frontend only. Phase 4 must not implement the login API call; the login form receives a submit callback and loading state from its consumer.
 
-**Scale/Scope**: Schema file, auth store, layout guard, silent refresh service/middleware, login form component, credential-login hook, MFA verification hook, MFA challenge form, and login page wiring for the Authentication feature.
+**Scale/Scope**: Schema file, auth store, layout guard, silent refresh service/middleware, login form component, credential-login hook, MFA verification hook, MFA challenge form, SSO redirect wiring, biometric login hook, and login page wiring for the Authentication feature.
 
 ## Constitution Check
 
@@ -70,6 +70,7 @@ src/features/auth/services/
 
 src/features/auth/hooks/
 ├── use-login.ts
+├── use-biometric-login.ts
 └── use-verify-mfa.ts
 
 src/components/layout/
@@ -180,6 +181,38 @@ Complete the second step of Super Admin authentication when credential login ret
 - Hook or route-level test verifies a login response with `mfa_token` shows the MFA challenge instead of the login form.
 - Hook or route-level test verifies successful MFA verification stores the access token and redirects to `/dashboard`.
 
+## Phase 7: SSO & Biometric Adapters
+
+### Goal
+
+Wire the existing alternative-login controls on the login form to real authentication adapters without expanding the authentication scope beyond SAML SSO initiation and WebAuthn biometric verification. The SSO action should perform a full browser redirect. The biometric action should handle unsupported browsers gracefully, request a browser credential, submit the credential assertion for backend verification, and complete the in-memory session when verification returns an access token.
+
+### Changes
+
+- Update `src/features/auth/components/login-form.tsx`:
+  - Accept delegated handlers for SSO and biometric actions.
+  - Wire "Continue with SSO" to the supplied SSO handler.
+  - Wire "Use Biometrics" to the supplied biometric handler.
+  - Preserve existing loading/disabled behavior.
+- Extend `src/features/auth/services/auth.service.ts` with biometric verification behavior that submits the browser credential assertion to `POST /auth/biometric/verify`.
+- Create `src/features/auth/hooks/use-biometric-login.ts`:
+  - Detect browser credential support before starting biometric login.
+  - Start the WebAuthn `navigator.credentials.get()` flow.
+  - Submit the resulting assertion through the auth service.
+  - On successful `access_token`, call `useAuthStore` token setter and redirect to `/dashboard`.
+  - On unsupported browser, cancellation, or verification failure, show a clear biometric login error.
+- Update `src/app/(auth)/login/page.tsx`:
+  - Pass an SSO handler that performs a full browser redirect to `/auth/sso/initiate?provider=saml`.
+  - Pass biometric mutation state and handler into `LoginForm`.
+
+### Tests
+
+- Component test verifies `LoginForm` invokes supplied SSO and biometric handlers and keeps controls disabled while loading.
+- Service test verifies biometric verification sends the expected backend payload and handles backend or empty-response errors.
+- Hook test verifies unsupported-browser handling makes no backend verification call.
+- Hook test verifies successful biometric verification stores the access token and redirects to `/dashboard`.
+- Route-level test verifies the SSO action changes the browser location to the SAML initiation URL.
+
 ## Complexity Tracking
 
-No constitution violations anticipated. The layout guard and auth middleware import from the auth feature store; this is a deliberate cross-cutting concern analogous to the existing `src/lib/api/auth-middleware.ts`. MFA verification follows the same service/hook/page wiring pattern as credential login while keeping API behavior out of visual form components.
+No constitution violations anticipated. The layout guard and auth middleware import from the auth feature store; this is a deliberate cross-cutting concern analogous to the existing `src/lib/api/auth-middleware.ts`. MFA and biometric verification follow the same service/hook/page wiring pattern as credential login while keeping API behavior out of visual form components. SSO is a browser redirect and does not require a client callback route in this phase.
