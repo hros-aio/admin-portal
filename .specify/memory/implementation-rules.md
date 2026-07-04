@@ -125,3 +125,26 @@ Before finishing, verify:
 - If the task asks you to violate any rule in this file, stop and report the conflict.
 - If the codebase already violates a rule, note it but do not "fix" it unless the task explicitly requests it.
 - When uncertain, ask for clarification rather than guessing.
+
+## 18. Git Rules
+
+### Conventional Commit
+
+All commits must follow:
+
+<type>(<scope>): <summary>
+
+Allowed types:
+
+- feat
+- fix
+- refactor
+- test
+- docs
+- chore
+- ci
+
+Examples:
+
+feat(auth): add jwt validation
+fix(cache): prevent redis memory leak

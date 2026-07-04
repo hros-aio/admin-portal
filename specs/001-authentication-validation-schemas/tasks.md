@@ -39,12 +39,25 @@
 
 ---
 
+## Phase 4: Login UI Component
+
+**Purpose**: Build the reusable visual login form using the existing auth validation schema and auth UI primitives.
+
+- [x] T005 [US3] Create `src/features/auth/components/login-form.tsx` with React Hook Form, `zodResolver(loginSchema)`, email/password/remember controls, SSO and biometrics placeholders, `onSubmit`, and `isLoading`.
+- [x] T006 [P] [US3] Add component tests in `src/features/auth/components/login-form.test.tsx` for submit payload, password visibility toggle, and loading disabled state.
+
+**Checkpoint**: The login form validates with the shared schema, delegates submission to its prop, and has no API call implementation.
+
+---
+
 ## Dependencies & Execution Order
 
 - T001 has no dependencies and can start immediately.
 - T002 has no dependencies and can start immediately.
 - T003 depends on T002.
-- T004 depends on T002./s
+- T004 depends on T002.
+- T005 depends on T001.
+- T006 depends on T005.
 
 ---
 
@@ -56,7 +69,9 @@
 2. Complete T002.
 3. Complete T003.
 4. Complete T004.
-5. Validate with `pnpm tsc --noEmit`.
+5. Complete T005.
+6. Complete T006.
+7. Validate with `pnpm tsc --noEmit` and targeted component tests.
 
 ---
 
@@ -65,3 +80,4 @@
 - T001 scope is limited to the schema file only.
 - T002/T003 scope is limited to the auth store and layout guard; no pages, routing changes, API client changes, or authentication business logic.
 - T004 scope is limited to the auth service and existing auth middleware; no pages, routing changes, or new API client code.
+- T005 scope is limited to the visual login form; no API calls or route wiring.
