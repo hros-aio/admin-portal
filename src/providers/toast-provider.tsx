@@ -1,7 +1,9 @@
 "use client";
 
 import * as Toast from "@radix-ui/react-toast";
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
+
+import { ToastContext, type ToastContextValue } from "@/lib/toast";
 
 type ToastVariant = "default" | "success" | "error";
 
@@ -12,14 +14,7 @@ interface ToastItem {
   variant: ToastVariant;
 }
 
-interface ToastContextValue {
-  success: (title: string, description?: string) => void;
-  error: (title: string, description?: string) => void;
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null);
-
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const removeToast = useCallback((id: string) => {
@@ -84,25 +79,4 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useToast(): ToastContextValue {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within ToastProvider");
-  }
-  return context;
-}
-
-export const toast = {
-  success: (title: string, description?: string) => {
-    console.warn("toast.success called outside a React component. Use useToast hook instead.", {
-      title,
-      description,
-    });
-  },
-  error: (title: string, description?: string) => {
-    console.warn("toast.error called outside a React component. Use useToast hook instead.", {
-      title,
-      description,
-    });
-  },
-};
+export { toast, useToast } from "@/lib/toast";

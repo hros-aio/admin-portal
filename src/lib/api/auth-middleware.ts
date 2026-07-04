@@ -29,8 +29,8 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
-function isAuthRefreshRequest(schemaPath: string): boolean {
-  return schemaPath === "/v1/auth/refresh";
+function isPublicAuthRequest(schemaPath: string): boolean {
+  return schemaPath === "/v1/auth/login" || schemaPath === "/v1/auth/refresh";
 }
 
 function redirectToLogin(): void {
@@ -40,7 +40,11 @@ function redirectToLogin(): void {
 }
 
 export const authMiddleware: Middleware = {
-  onRequest({ request }) {
+  onRequest({ request, schemaPath }) {
+    if (isPublicAuthRequest(schemaPath)) {
+      return request;
+    }
+
     const { accessToken } = useAuthStore.getState();
 
     if (accessToken) {
@@ -58,7 +62,7 @@ export const authMiddleware: Middleware = {
       return response;
     }
 
-    if (isAuthRefreshRequest(schemaPath)) {
+    if (isPublicAuthRequest(schemaPath)) {
       return response;
     }
 

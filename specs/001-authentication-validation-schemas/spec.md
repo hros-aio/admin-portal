@@ -57,6 +57,22 @@ As an admin, I want a complete login form with email, password, session-length, 
 
 ---
 
+### User Story 4 - Submit Credential Login (Priority: P1)
+
+As an admin, I want the login screen to submit my email and password and start an authenticated session when the credentials are accepted so that I can enter the admin portal.
+
+**Why this priority**: Credential login is the primary path from the authentication screen into protected admin workflows.
+
+**Independent Test**: The login behavior can be tested by submitting valid and invalid credentials while confirming session state, redirect behavior, and error messaging.
+
+**Acceptance Scenarios**:
+
+1. **Given** an admin submits accepted credentials, **When** the login response contains an access token, **Then** the application stores the access token for the current session and sends the admin to the dashboard.
+2. **Given** an admin submits credentials for a locked account, **When** the login attempt fails with an account-locked result, **Then** the application shows a specific account-locked message.
+3. **Given** an admin submits invalid credentials, **When** the login attempt fails for any other authentication reason, **Then** the application shows the generic message "Invalid email or password".
+
+---
+
 ## Requirements
 
 ### Functional Requirements
@@ -73,6 +89,11 @@ As an admin, I want a complete login form with email, password, session-length, 
 - **FR-010**: The login form MUST validate input with the shared login validation rules before invoking its supplied submit handler.
 - **FR-011**: The login form MUST expose placeholder controls for SSO and biometrics authentication without implementing those flows.
 - **FR-012**: The login form MUST support a loading state that prevents user interaction while submission is in progress.
+- **FR-013**: The Authentication feature MUST provide credential-login behavior that submits the validated login payload to the backend authentication endpoint.
+- **FR-014**: When credential login succeeds with an access token, the application MUST update the current in-memory auth session.
+- **FR-015**: When credential login succeeds with an access token, the application MUST redirect the admin to `/dashboard`.
+- **FR-016**: When credential login fails because the account is locked, the application MUST show a specific account-locked error message.
+- **FR-017**: When credential login fails for any other authentication error, the application MUST show the generic message "Invalid email or password".
 
 ## Success Criteria
 
@@ -86,9 +107,13 @@ As an admin, I want a complete login form with email, password, session-length, 
 - **SC-006**: `src/components/layout/auth-guard.tsx` redirects to `/login` when no token exists and renders children when authenticated.
 - **SC-007**: `src/features/auth/components/login-form.tsx` renders the required login controls and calls its supplied submit handler only after successful validation.
 - **SC-008**: The login form disables all interactive controls while loading.
+- **SC-009**: A successful credential-login response with an access token results in the token being available in the current auth session.
+- **SC-010**: A successful credential-login response with an access token redirects the admin to the dashboard.
+- **SC-011**: A locked-account credential-login failure displays a locked-account message, while other authentication failures display "Invalid email or password".
 
 ## Assumptions
 
 - Zod is already installed and is the project's validation library.
 - Shared primitive schemas (email, strong password) exist in `src/lib/validation/primitives.ts` and should be reused where appropriate.
 - Authentication API calls are intentionally outside the login form component and will be handled by the consuming route or hook.
+- The backend login response includes an access token when credential login is complete and successful.

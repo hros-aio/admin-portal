@@ -1,21 +1,16 @@
 "use client";
 
 import { AuthBrandingHeader } from "@/features/auth/components/auth-branding-header";
-import { AuthButton } from "@/features/auth/components/auth-button";
 import { AuthCard } from "@/features/auth/components/auth-card";
 import { AuthFooter } from "@/features/auth/components/auth-footer";
-import { AuthInput } from "@/features/auth/components/auth-input";
 import { AtmosphericBackground } from "@/features/auth/components/atmospheric-background";
-import { PasswordField } from "@/features/auth/components/password-field";
-import {
-  ArrowRightIcon,
-  FingerprintIcon,
-  MailIcon,
-  ScanFaceIcon,
-  ShieldIcon,
-} from "@/features/auth/components/icons";
+import { ShieldIcon } from "@/features/auth/components/icons";
+import { LoginForm } from "@/features/auth/components/login-form";
+import { useLogin } from "@/features/auth/hooks/use-login";
 
 export default function LoginPage() {
+  const login = useLogin();
+
   return (
     <AtmosphericBackground>
       <main className="flex min-h-screen w-full items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
@@ -29,90 +24,12 @@ export default function LoginPage() {
             />
 
             <AuthCard className="w-full sm:w-[416px]">
-              <form
-                className="flex flex-col gap-6"
-                onSubmit={(e) => {
-                  e.preventDefault();
+              <LoginForm
+                onSubmit={(values) => {
+                  login.mutate(values);
                 }}
-              >
-                <AuthInput
-                  label="Work Email"
-                  type="email"
-                  placeholder="name@company.com"
-                  autoComplete="email"
-                  leftIcon={<MailIcon className="h-5 w-5" />}
-                />
-
-                <PasswordField
-                  label="Password"
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                />
-
-                <div className="flex items-center justify-between">
-                  <label className="flex cursor-pointer items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-[#c7c4d8] text-[#1e00a9] focus-visible:ring-[#1e00a9]"
-                      onChange={() => undefined}
-                    />
-                    <span className="text-sm leading-5 text-[#464555]">Remember me</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => undefined}
-                    className="text-sm font-semibold text-[#1e00a9] transition-colors hover:text-[#3525cd] hover:underline hover:underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e00a9] focus-visible:ring-offset-2"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
-                <AuthButton
-                  type="submit"
-                  size="large"
-                  rightIcon={<ArrowRightIcon className="h-4 w-4" />}
-                >
-                  Sign In
-                </AuthButton>
-
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-[rgba(199,196,216,0.5)]" />
-                  <span className="text-xs font-semibold uppercase tracking-wide text-[#777587]">
-                    Or continue with
-                  </span>
-                  <div className="h-px flex-1 bg-[rgba(199,196,216,0.5)]" />
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <AuthButton
-                    type="button"
-                    variant="outline"
-                    size="compact"
-                    leftIcon={<span className="text-sm font-semibold">SSO</span>}
-                    onClick={() => undefined}
-                  >
-                    SSO
-                  </AuthButton>
-                  <AuthButton
-                    type="button"
-                    variant="outline"
-                    size="compact"
-                    leftIcon={<FingerprintIcon className="h-4 w-4" />}
-                    onClick={() => undefined}
-                  >
-                    Bio
-                  </AuthButton>
-                  <AuthButton
-                    type="button"
-                    variant="outline"
-                    size="compact"
-                    leftIcon={<ScanFaceIcon className="h-4 w-4" />}
-                    onClick={() => undefined}
-                  >
-                    Face
-                  </AuthButton>
-                </div>
-              </form>
+                isLoading={login.isPending}
+              />
             </AuthCard>
 
             <p className="mt-6 text-center text-sm leading-5 text-[#777587]">

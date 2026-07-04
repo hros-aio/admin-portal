@@ -94,6 +94,21 @@ describe("authMiddleware", () => {
 
       expect(result.headers.has("Authorization")).toBe(false);
     });
+
+    it("does not attach an Authorization header to public auth endpoints", () => {
+      mockGetState.mockReturnValue({
+        accessToken: "existing-token",
+        setToken: vi.fn(),
+        clearSession: vi.fn(),
+      });
+
+      const request = new Request("http://localhost/v1/auth/login");
+      const result = invokeOnRequest(
+        createParams({ request, response: new Response(), schemaPath: "/v1/auth/login" })
+      );
+
+      expect(result.headers.has("Authorization")).toBe(false);
+    });
   });
 
   describe("onResponse", () => {
@@ -187,6 +202,24 @@ describe("authMiddleware", () => {
 
       const result = await invokeOnResponse(
         createParams({ request, response, schemaPath: "/v1/auth/refresh" })
+      );
+
+      expect(mockRefreshSession).not.toHaveBeenCalled();
+      expect(result).toBe(response);
+    });
+
+    it("does not refresh for the login endpoint itself", async () => {
+      mockGetState.mockReturnValue({
+        accessToken: "old-token",
+        setToken: vi.fn(),
+        clearSession: vi.fn(),
+      });
+
+      const request = new Request("http://localhost/v1/auth/login");
+      const response = new Response(null, { status: 401 });
+
+      const result = await invokeOnResponse(
+        createParams({ request, response, schemaPath: "/v1/auth/login" })
       );
 
       expect(mockRefreshSession).not.toHaveBeenCalled();
