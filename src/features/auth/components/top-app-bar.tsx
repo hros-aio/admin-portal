@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { HrosLogo, ShieldIcon, HelpCircleIcon } from "./icons";
+import { ShieldIcon, HelpCircleIcon } from "./icons";
 
 interface TopAppBarProps {
   className?: string;
@@ -13,9 +13,8 @@ export function TopAppBar({ className }: TopAppBarProps) {
         className
       )}
     >
-      <div className="flex items-center gap-2">
-        <HrosLogo className="h-[26px] w-[26px]" />
-        <span className="text-base font-semibold leading-6 tracking-tight text-[#151c27]">
+      <div className="relative">
+        <span className="text-[28px] font-bold leading-9 tracking-[-0.56px] text-[#1e00a9] sm:text-[36px] sm:leading-[44px] sm:tracking-[-0.72px]">
           HROS Admin
         </span>
       </div>
