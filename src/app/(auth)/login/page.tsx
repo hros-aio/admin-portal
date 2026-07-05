@@ -95,6 +95,9 @@ export default function LoginPage() {
                 onBiometricLogin={(values) => {
                   biometricLogin.mutate(values);
                 }}
+                onForgotPassword={() => {
+                  window.location.assign("/forgot-password");
+                }}
                 isLoading={login.isPending}
                 isBiometricLoading={biometricLogin.isPending}
               />

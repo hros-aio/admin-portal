@@ -2,62 +2,101 @@
 
 **Input**: Design documents from `/specs/001-authentication-validation-schemas/`
 
-**Prerequisites**: plan.md (required), spec.md (required)
+**Prerequisites**: plan.md, spec.md, research.md, data-model.md, quickstart.md
+
+**Scope**: STRICTLY schema-only. Implement `src/features/auth/schemas/auth.schema.ts`, exported inferred TypeScript types, and co-located schema unit tests only.
+
+**Explicitly Excluded**: UI components, pages, forms, React Hook Form, loading states, hooks, API integration, services, email flow, routing, and token parsing.
 
 ## Format: `[ID] [P?] [Story] Description`
 
 ---
 
-## Phase 1: Foundational
+## Phase 1: Setup
 
-**Purpose**: Create the Zod validation schemas for the Authentication feature.
+**Purpose**: Confirm the schema-only implementation target and test location.
 
-- [x] T001 Create `src/features/auth/schemas/auth.schema.ts` defining `loginSchema`, `mfaSchema`, `passwordResetRequestSchema`, `passwordResetConfirmSchema`, and `acceptInviteSchema`, and export inferred TypeScript types.
+- [ ] T001 Review existing shared validation primitives in `src/lib/validation/primitives.ts` for reusable email and strong-password rules.
+- [ ] T002 Create or confirm the co-located schema test file at `src/features/auth/schemas/auth.schema.test.ts`.
 
-**Checkpoint**: All schemas are defined and inferred types are exported.
-
----
-
-## Phase 2: Auth State Management & Layout Guards
-
-**Purpose**: Implement the in-memory auth store and the authenticated-route layout guard.
-
-- [x] T002 Create `src/features/auth/stores/auth-store.ts` with `accessToken` (string | null), `setToken(token)`, and `clearSession()`; do not use persistence middleware.
-- [x] T003 Create `src/components/layout/auth-guard.tsx` that reads `accessToken` from `useAuthStore` and redirects to `/login` when unauthenticated; render children when authenticated.
-
-**Checkpoint**: The auth store holds the token in memory and the guard redirects unauthenticated users.
+**Checkpoint**: The implementation target and test file are ready; no UI, page, hook, service, or route files are introduced.
 
 ---
 
-## Phase 3: Silent Refresh API Interceptor
+## Phase 2: Foundational
 
-**Purpose**: Configure the OpenAPI fetch client to attach access tokens and silently refresh them on 401 responses.
+**Purpose**: Establish imports and exports used by all schema tasks.
 
-- [x] T004 Add `src/features/auth/services/auth.service.ts` with `refreshSession()` calling `POST /v1/auth/refresh`, and extend `src/lib/api/auth-middleware.ts` to inject `Authorization`, intercept 401s, retry after refresh, redirect to `/login` on refresh failure, and deduplicate concurrent refresh attempts.
+- [ ] T003 Define the Zod import and shared primitive imports in `src/features/auth/schemas/auth.schema.ts`.
+- [ ] T004 Define exported inferred type placeholders or final type exports in `src/features/auth/schemas/auth.schema.ts` for `LoginInput`, `MfaInput`, `PasswordResetRequestInput`, `PasswordResetConfirmInput`, and `AcceptInviteInput`.
 
-**Checkpoint**: Authenticated requests carry a Bearer token, a single 401 triggers at most one silent refresh, and refresh failure clears the session and redirects to login.
+**Checkpoint**: The schema file has the required dependency imports and exported type surface, with no API or UI imports.
 
 ---
 
-## Phase 4: Login UI Component
+## Phase 3: User Story 1 - Validate Authentication Form Inputs (Priority: P1) MVP
 
-**Purpose**: Build the reusable visual login form using the existing auth validation schema and auth UI primitives.
+**Goal**: Provide Zod schemas and inferred types for login, MFA, password reset request, password reset confirmation, and invitation acceptance payloads.
 
-- [x] T005 [US3] Create `src/features/auth/components/login-form.tsx` with React Hook Form, `zodResolver(loginSchema)`, email/password/remember controls, SSO and biometrics placeholders, `onSubmit`, and `isLoading`.
-- [x] T006 [P] [US3] Add component tests in `src/features/auth/components/login-form.test.tsx` for submit payload, password visibility toggle, and loading disabled state.
+**Independent Test**: Run `pnpm test src/features/auth/schemas/auth.schema.test.ts` and verify each schema accepts valid payloads and rejects invalid payloads without UI or API dependencies.
 
-**Checkpoint**: The login form validates with the shared schema, delegates submission to its prop, and has no API call implementation.
+### Tests for User Story 1
+
+> Write or update these tests first and confirm they fail before completing implementation tasks.
+
+- [ ] T005 [US1] Add `loginSchema` valid and invalid payload tests in `src/features/auth/schemas/auth.schema.test.ts`.
+- [ ] T006 [US1] Add `mfaSchema` six-digit, short, long, and non-numeric code tests in `src/features/auth/schemas/auth.schema.test.ts`.
+- [ ] T007 [US1] Add `passwordResetRequestSchema` valid, blank, and invalid email tests in `src/features/auth/schemas/auth.schema.test.ts`.
+- [ ] T008 [US1] Add `passwordResetConfirmSchema` valid payload, blank token, weak password, blank confirmation, and mismatched confirmation tests in `src/features/auth/schemas/auth.schema.test.ts`.
+- [ ] T009 [US1] Add `acceptInviteSchema` valid payload, weak password, and mismatched confirmation tests in `src/features/auth/schemas/auth.schema.test.ts`.
+
+### Implementation for User Story 1
+
+- [ ] T010 [US1] Implement `loginSchema` with `email`, `password`, and `remember_me` validation in `src/features/auth/schemas/auth.schema.ts`.
+- [ ] T011 [US1] Implement `mfaSchema` with exactly six numeric digits validation in `src/features/auth/schemas/auth.schema.ts`.
+- [ ] T012 [US1] Implement `passwordResetRequestSchema` using shared email validation in `src/features/auth/schemas/auth.schema.ts`.
+- [ ] T013 [US1] Implement `passwordResetConfirmSchema` with token, strong password, confirmation, and password-match validation in `src/features/auth/schemas/auth.schema.ts`.
+- [ ] T014 [US1] Implement `acceptInviteSchema` with the same token and password confirmation rules as password reset confirmation in `src/features/auth/schemas/auth.schema.ts`.
+- [ ] T015 [US1] Export `LoginInput`, `MfaInput`, `PasswordResetRequestInput`, `PasswordResetConfirmInput`, and `AcceptInviteInput` from `src/features/auth/schemas/auth.schema.ts`.
+
+**Checkpoint**: All five schemas and all five inferred types are implemented and tested independently.
+
+---
+
+## Phase 4: Polish & Validation
+
+**Purpose**: Verify the schema-only implementation and guard against accidental scope expansion.
+
+- [ ] T016 Run schema unit tests from `specs/001-authentication-validation-schemas/quickstart.md` with `pnpm test src/features/auth/schemas/auth.schema.test.ts`.
+- [ ] T017 Run type checking from `specs/001-authentication-validation-schemas/quickstart.md` with `pnpm typecheck`.
+- [ ] T018 Verify the final diff only touches `src/features/auth/schemas/auth.schema.ts` and `src/features/auth/schemas/auth.schema.test.ts` for implementation work.
 
 ---
 
 ## Dependencies & Execution Order
 
-- T001 has no dependencies and can start immediately.
-- T002 has no dependencies and can start immediately.
-- T003 depends on T002.
-- T004 depends on T002.
-- T005 depends on T001.
-- T006 depends on T005.
+### Phase Dependencies
+
+- **Setup (Phase 1)**: No dependencies.
+- **Foundational (Phase 2)**: Depends on Setup completion.
+- **User Story 1 (Phase 3)**: Depends on Foundational completion.
+- **Polish & Validation (Phase 4)**: Depends on User Story 1 completion.
+
+### User Story Dependencies
+
+- **User Story 1 (P1)**: No dependencies on other user stories. This is the only implementation story in scope for the current plan.
+
+### Within User Story 1
+
+- T005-T009 define the expected schema behavior and should be written before T010-T015.
+- T010-T015 all update `src/features/auth/schemas/auth.schema.ts`; perform them sequentially to avoid same-file conflicts.
+- T016-T018 validate after implementation.
+
+### Parallel Opportunities
+
+- No same-file test tasks are marked `[P]` because T005-T009 all edit `src/features/auth/schemas/auth.schema.test.ts`.
+- No schema implementation tasks are marked `[P]` because T010-T015 all edit `src/features/auth/schemas/auth.schema.ts`.
+- A reviewer can inspect T018 scope while validation commands run after implementation.
 
 ---
 
@@ -65,144 +104,23 @@
 
 ### MVP First
 
-1. Complete T001.
-2. Complete T002.
-3. Complete T003.
-4. Complete T004.
-5. Complete T005.
-6. Complete T006.
-7. Validate with `pnpm tsc --noEmit` and targeted component tests.
+1. Complete Phase 1 and Phase 2.
+2. Complete all User Story 1 tests in `src/features/auth/schemas/auth.schema.test.ts`.
+3. Implement the schemas and inferred types in `src/features/auth/schemas/auth.schema.ts`.
+4. Run the quickstart validation commands.
+5. Stop. Do not continue into UI, pages, hooks, services, API integration, routing, email flow, or token parsing.
 
----
+### Incremental Delivery
+
+1. Add tests for one schema.
+2. Implement that schema and its inferred type.
+3. Repeat for the remaining schemas.
+4. Run full schema test file and typecheck.
 
 ## Notes
 
-- T001 scope is limited to the schema file only.
-- T002/T003 scope is limited to the auth store and layout guard; no pages, routing changes, API client changes, or authentication business logic.
-- T004 scope is limited to the auth service and existing auth middleware; no pages, routing changes, or new API client code.
-- T005 scope is limited to the visual login form; no API calls or route wiring.
-
----
-
-## Phase 5: Login Business Logic & Hook
-
-**Purpose**: Connect the reusable login form to the credential-login API through feature-scoped business logic.
-
-- [x] T007 Add `login()` to `src/features/auth/services/auth.service.ts` that calls `POST /v1/auth/login`, returns the typed login response, and throws `ApiError` for backend errors or empty responses.
-- [x] T008 [P] Add service tests in `src/features/auth/services/auth.service.test.ts` for `login()` success, backend error, and empty response paths.
-- [x] T009 Create `src/features/auth/hooks/use-login.ts` using TanStack Query `useMutation`; on successful `access_token`, update `useAuthStore` and redirect to `/dashboard`; on `ACCOUNT_LOCKED`, show the locked-account toast; otherwise show "Invalid email or password".
-- [x] T010 Wire `useLogin()` into `src/app/(auth)/login/page.tsx` and pass mutation submit/loading state to `LoginForm`.
-
-**Checkpoint**: Submitting the login page uses the credential-login API, stores the access token in memory on success, redirects to the dashboard, and shows the required toast messages on failure.
-
----
-
-## Phase 5 Dependencies & Execution Order
-
-- T007 depends on T004 because it extends the existing auth service.
-- T008 depends on T007 and may run independently from page wiring after the service signature is defined.
-- T009 depends on T007, T002, and the project toast provider.
-- T010 depends on T005 and T009.
-
-## Phase 5 Implementation Strategy
-
-1. Complete T007.
-2. Complete T008.
-3. Complete T009.
-4. Complete T010.
-5. Validate with `pnpm typecheck`, targeted auth service tests, and relevant hook or page tests.
-
-## Phase 5 Notes
-
-- Keep API calls out of `LoginForm`; it remains a visual form with delegated submission.
-- Keep access tokens in the in-memory auth store only.
-- Do not implement MFA, SSO, biometrics, or password reset flows as part of Phase 5.
-
----
-
-## Phase 6: MFA Challenge Flow
-
-**Purpose**: Complete the Super Admin MFA challenge step when credential login returns an MFA token.
-
-- [x] T011 [US5] Create `src/features/auth/components/mfa-challenge-form.tsx` with React Hook Form, `zodResolver(mfaSchema)`, an `mfaToken` prop, TOTP code input, delegated `onSubmit`, and `isLoading`.
-- [x] T012 [P] [US5] Add component tests in `src/features/auth/components/mfa-challenge-form.test.tsx` for valid submit payload, validation errors, and loading disabled state.
-- [x] T013 Add `verifyMfa()` to `src/features/auth/services/auth.service.ts` that calls `POST /auth/mfa/verify` with `{ mfa_token, method: 'totp', code }`, returns the typed response, and throws `ApiError` for backend errors or empty responses.
-- [x] T014 [P] Add service tests in `src/features/auth/services/auth.service.test.ts` for `verifyMfa()` success, expected request payload, backend error, and empty response paths.
-- [x] T015 Create `src/features/auth/hooks/use-verify-mfa.ts` using TanStack Query `useMutation`; on successful `access_token`, update `useAuthStore` and redirect to `/dashboard`; on verification failure, show a clear MFA verification error.
-- [x] T016 Update `src/features/auth/hooks/use-login.ts` so credential-login success with `mfa_token` exposes or returns the MFA challenge state without storing an access token or redirecting.
-- [x] T017 Update `src/app/(auth)/login/page.tsx` to conditionally render `MfaChallengeForm` instead of `LoginForm` when an MFA challenge token is present, and wire `useVerifyMfa()` submit/loading state into the MFA form.
-- [x] T018 [P] Add hook or route-level tests verifying `mfa_token` switches the login page to the MFA challenge, successful MFA verification stores the access token and redirects to `/dashboard`, and failed verification remains on the challenge.
-
-**Checkpoint**: A Super Admin whose credential login requires MFA sees the TOTP challenge, can verify it, receives an in-memory access token, and lands on the dashboard.
-
----
-
-## Phase 6 Dependencies & Execution Order
-
-- T011 depends on T001 because it uses the shared MFA validation schema.
-- T012 depends on T011.
-- T013 depends on T004 because it extends the existing auth service.
-- T014 depends on T013 and may run independently from page wiring after the service signature is defined.
-- T015 depends on T013, T002, and the project toast provider.
-- T016 depends on T009 and the agreed login response shape that can include `mfa_token`.
-- T017 depends on T011, T015, and T016.
-- T018 depends on T015, T016, and T017.
-
-## Phase 6 Implementation Strategy
-
-1. Complete T011.
-2. Complete T013.
-3. Complete T015.
-4. Complete T016.
-5. Complete T017.
-6. Add T012, T014, and T018 coverage.
-7. Validate with `pnpm typecheck`, targeted auth service tests, and relevant component or route tests.
-
-## Phase 6 Notes
-
-- Keep API calls out of `MfaChallengeForm`; it remains a visual form with delegated submission.
-- Keep access tokens in the in-memory auth store only.
-- MFA scope is limited to TOTP verification for this phase; SSO, biometrics, backup codes, and MFA enrollment are out of scope.
-- The old standalone `/mfa-verification` page is removed so the login MFA challenge is the only MFA verification surface.
-
----
-
-## Phase 7: SSO & Biometric Adapters
-
-**Purpose**: Wire the existing alternative-login controls to SAML SSO initiation and WebAuthn biometric verification without adding callback routes or enrollment flows.
-
-- [x] T019 [US6] Update `src/features/auth/components/login-form.tsx` to accept delegated `onSsoLogin` and `onBiometricLogin` handlers, wire the existing "Continue with SSO" and "Use Biometrics" buttons to them, and preserve disabled/loading behavior.
-- [x] T020 [P] [US6] Update `src/features/auth/components/login-form.test.tsx` for SSO handler invocation, biometric handler invocation, and disabled alternative-login controls while loading.
-- [x] T021 Add biometric verification behavior to `src/features/auth/services/auth.service.ts` that submits the WebAuthn credential assertion to `POST /auth/biometric/verify`, returns the typed login response, and throws `ApiError` for backend errors or empty responses.
-- [x] T022 [P] Add service tests in `src/features/auth/services/auth.service.test.ts` for biometric verification success, expected request payload, backend error, and empty response paths.
-- [x] T023 Create `src/features/auth/hooks/use-biometric-login.ts` that checks browser credential support, runs `navigator.credentials.get()`, submits the credential assertion through the auth service, stores `access_token` in `useAuthStore`, redirects to `/dashboard`, and shows clear errors for unsupported, cancelled, or failed biometric attempts.
-- [x] T024 Update `src/app/(auth)/login/page.tsx` to pass an SSO full-redirect handler for `/auth/sso/initiate?provider=saml` and pass `useBiometricLogin()` submit/loading state into `LoginForm`; add hook or route-level tests for SSO redirect, unsupported biometric support, successful biometric verification, MFA step-up, and failed or cancelled biometric attempts.
-
-**Checkpoint**: The login form starts SAML SSO with a full browser redirect and starts biometric login through WebAuthn, handling unsupported browsers and successful backend verification.
-
----
-
-## Phase 7 Dependencies & Execution Order
-
-- T019 depends on T005 because it extends the existing reusable login form.
-- T020 depends on T019.
-- T021 depends on T007 because it extends the existing auth service.
-- T022 depends on T021 and may run independently from login page wiring after the service signature is defined.
-- T023 depends on T021, T002, and the project toast provider.
-- T024 depends on T019 and T023.
-
-## Phase 7 Implementation Strategy
-
-1. Complete T019.
-2. Complete T021.
-3. Complete T023.
-4. Complete T024.
-5. Add T020 and T022 coverage plus route or hook coverage for T024 behavior.
-6. Validate with `pnpm typecheck`, targeted auth service tests, login form tests, and relevant hook or route tests.
-
-## Phase 7 Notes
-
-- Keep API calls out of `LoginForm`; it remains a visual form with delegated alternative-login actions.
-- SSO scope is limited to full browser redirect to `/auth/sso/initiate?provider=saml`; do not add an SSO callback route.
-- Biometric scope is limited to WebAuthn credential retrieval and backend verification; do not implement enrollment or credential management.
-- Keep access tokens in the in-memory auth store only.
+- Each task includes an exact file path.
+- All implementation tasks map to the single in-scope story, US1.
+- Later auth epic work present in the broader specification is intentionally excluded by the current implementation plan.
+- Do not modify `src/types/api.generated.ts`.
+- Do not create component, hook, service, route, or form files.

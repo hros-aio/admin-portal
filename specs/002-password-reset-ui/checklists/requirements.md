@@ -1,8 +1,7 @@
-# Specification Quality Checklist: Authentication Validation Schemas
+# Specification Quality Checklist: Password Reset UI
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-07-02
-**Updated**: 2026-07-05
+**Created**: 2026-07-05
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -32,5 +31,5 @@
 
 ## Notes
 
-- Specification has been extended through Phase 8 for the auth store, guard, silent refresh interceptor, login UI component, credential-login business logic, Super Admin MFA challenge flow, bounded SSO/biometric login adapters, and password reset request/confirmation UI.
-- Phase 8 remains scoped to visual forms, existing validation rules, and loading states; password reset API integration, token parsing, email delivery, and backend confirmation are explicitly out of scope.
+- Validation completed on 2026-07-05. The spec is limited to visual password reset pages/forms, validation behavior, delegated submission, and loading states.
+- Backend reset integration, reset-token handling, email delivery, success screens, and token persistence remain out of scope.

@@ -16,6 +16,7 @@ export interface LoginFormProps {
   onSubmit: SubmitHandler<LoginInput>;
   onSsoLogin?: () => void;
   onBiometricLogin?: (values: BiometricLoginInput) => void;
+  onForgotPassword?: () => void;
   isLoading?: boolean;
   isBiometricLoading?: boolean;
   className?: string;
@@ -25,6 +26,7 @@ export function LoginForm({
   onSubmit,
   onSsoLogin,
   onBiometricLogin,
+  onForgotPassword,
   isLoading = false,
   isBiometricLoading = false,
   className,
@@ -78,6 +80,16 @@ export function LoginForm({
           placeholder="Enter your password"
           autoComplete="current-password"
           error={errors.password?.message ?? ""}
+          labelAction={
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={onForgotPassword}
+              className="text-xs font-semibold leading-4 tracking-[0.6px] text-[#1e00a9] transition-colors hover:text-[#3525cd] hover:underline hover:underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e00a9] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Forgot Password?
+            </button>
+          }
           {...register("password")}
         />
 
