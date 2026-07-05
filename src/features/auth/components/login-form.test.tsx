@@ -54,9 +54,21 @@ describe("LoginForm", () => {
     expect(screen.getByLabelText("Email")).toBeDisabled();
     expect(screen.getByLabelText("Password")).toBeDisabled();
     expect(screen.getByLabelText("Keep me logged in for 30 days")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Forgot Password?" })).toBeDisabled();
     expect(screen.getByRole("button", { name: /sign in/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Continue with SSO" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Use Biometrics" })).toBeDisabled();
+  });
+
+  it("calls the forgot password handler from the password label action", async () => {
+    const user = userEvent.setup();
+    const onForgotPassword = vi.fn();
+
+    render(<LoginForm onSubmit={vi.fn()} onForgotPassword={onForgotPassword} />);
+
+    await user.click(screen.getByRole("button", { name: "Forgot Password?" }));
+
+    expect(onForgotPassword).toHaveBeenCalledOnce();
   });
 
   it("calls the SSO handler from the alternative login button", async () => {

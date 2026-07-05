@@ -119,6 +119,16 @@ describe("LoginPage", () => {
     expect(locationAssign).toHaveBeenCalledWith("/auth/sso/initiate?provider=saml");
   });
 
+  it("performs a full browser redirect when forgot password is selected", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: "Forgot Password?" }));
+
+    expect(locationAssign).toHaveBeenCalledWith("/forgot-password");
+  });
+
   it("passes biometric login values from the login form", async () => {
     const user = userEvent.setup();
 

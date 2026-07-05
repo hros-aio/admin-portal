@@ -16,6 +16,16 @@ export const passwordResetRequestSchema = z.object({
   email: emailSchema,
 });
 
+export const passwordResetFormSchema = z
+  .object({
+    password: strongPasswordSchema,
+    password_confirmation: z.string().min(1, "Password confirmation is required"),
+  })
+  .refine((data) => data.password === data.password_confirmation, {
+    message: "Passwords do not match",
+    path: ["password_confirmation"],
+  });
+
 export const passwordResetConfirmSchema = z
   .object({
     token: z.string().min(1, "Token is required"),
@@ -32,5 +42,6 @@ export const acceptInviteSchema = passwordResetConfirmSchema;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type MfaInput = z.infer<typeof mfaSchema>;
 export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestSchema>;
+export type PasswordResetFormInput = z.infer<typeof passwordResetFormSchema>;
 export type PasswordResetConfirmInput = z.infer<typeof passwordResetConfirmSchema>;
 export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;

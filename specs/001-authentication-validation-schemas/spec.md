@@ -105,6 +105,32 @@ As an admin, I want to start SSO or biometric login from the login form so that 
 4. **Given** biometric verification succeeds with an access token, **When** the response is handled, **Then** the application stores the access token for the current session and sends the admin to the dashboard.
 5. **Given** biometric verification fails or the browser credential prompt is cancelled, **When** the error is handled, **Then** the application keeps the admin on the login screen and shows a clear biometric login error.
 
+---
+
+### User Story 7 - Complete Password Reset Forms (Priority: P1)
+
+As an admin who cannot access my account, I want clear password reset request and confirmation forms so that I can start and complete the reset journey with valid input before backend integration is added.
+
+**Why this priority**: Password reset is a required recovery path for admins and depends on the existing authentication validation rules.
+
+**Independent Test**: The forgot-password and reset-password forms can be rendered and submitted with valid and invalid input while confirming validation feedback, submitted payloads, and disabled loading states without calling an API.
+
+**Acceptance Scenarios**:
+
+1. **Given** an admin enters a valid email on the forgot-password page, **When** the form is submitted, **Then** the supplied submit handler receives the email reset-request payload.
+2. **Given** an admin enters an invalid email on the forgot-password page, **When** the form is submitted, **Then** the form shows validation feedback and does not invoke the submit handler.
+3. **Given** an admin enters a valid new password and matching confirmation on the reset-password page, **When** the form is submitted, **Then** the supplied submit handler receives the reset-confirmation payload.
+4. **Given** an admin enters mismatched password values on the reset-password page, **When** the form is submitted, **Then** the form shows validation feedback and does not invoke the submit handler.
+5. **Given** either password reset form is loading, **When** the form renders, **Then** all interactive controls are disabled and the loading state is visible to the admin.
+
+### Edge Cases
+
+- Forgot-password submission with a blank email is rejected before submission.
+- Reset-password submission with a blank password or blank confirmation is rejected before submission.
+- Reset-password submission with a password that does not meet the shared strong-password rules is rejected before submission.
+- Reset-password submission with mismatched password and confirmation values is rejected before submission.
+- Loading states prevent repeated submissions for both forms.
+
 ## Requirements
 
 ### Functional Requirements
@@ -140,6 +166,14 @@ As an admin, I want to start SSO or biometric login from the login form so that 
 - **FR-029**: When biometric verification succeeds with an access token, the application MUST update the current in-memory auth session and redirect the admin to `/dashboard`.
 - **FR-030**: When biometric verification fails or the credential prompt is cancelled, the application MUST keep the admin on the login screen and show a clear biometric login error.
 - **FR-031**: The Authentication feature MUST NOT add an SSO callback route as part of this phase.
+- **FR-032**: The Authentication feature MUST provide a forgot-password page at `/forgot-password`.
+- **FR-033**: The Authentication feature MUST provide a reusable forgot-password form with an email input and delegated submit handler.
+- **FR-034**: The forgot-password form MUST validate input with the shared password reset request validation rules before invoking its supplied submit handler.
+- **FR-035**: The Authentication feature MUST provide a reset-password page at `/reset-password`.
+- **FR-036**: The Authentication feature MUST provide a reusable reset-password form with new-password and confirm-password inputs and a delegated submit handler.
+- **FR-037**: The reset-password form MUST validate input with the shared password reset confirmation validation rules before invoking its supplied submit handler.
+- **FR-038**: Both password reset forms MUST support a loading state that disables all interactive controls while submission is in progress.
+- **FR-039**: Password reset UI work in this phase MUST NOT integrate with password reset APIs.
 
 ## Success Criteria
 
@@ -165,6 +199,11 @@ As an admin, I want to start SSO or biometric login from the login form so that 
 - **SC-018**: In browsers with WebAuthn credential support, a successful credential assertion is submitted for biometric verification exactly once per activation.
 - **SC-019**: Successful biometric verification with an access token makes that token available in the current auth session and redirects the admin to the dashboard.
 - **SC-020**: Failed or cancelled biometric login attempts leave the admin on the login screen and display a biometric login error.
+- **SC-021**: The forgot-password page renders an email reset-request form at `/forgot-password`.
+- **SC-022**: The forgot-password form submits the validated email payload exactly once per valid submission and never submits invalid email input.
+- **SC-023**: The reset-password page renders a new-password and confirm-password form at `/reset-password`.
+- **SC-024**: The reset-password form submits the validated password confirmation payload exactly once per valid submission and never submits mismatched or weak password input.
+- **SC-025**: Both password reset forms disable all interactive controls while loading.
 
 ## Assumptions
 
@@ -176,3 +215,5 @@ As an admin, I want to start SSO or biometric login from the login form so that 
 - The MFA challenge is part of the `/login` flow and does not use a separate MFA verification route.
 - SSO for this phase is limited to SAML initiation from the login screen; callback handling is owned outside this phase.
 - Biometric login for this phase uses browser WebAuthn credential retrieval and backend verification only; biometric enrollment and credential management are outside this phase.
+- Password reset UI for this phase reuses the existing password reset request and confirmation validation rules.
+- Password reset API calls, reset-token parsing, success email delivery, and backend reset confirmation are outside this phase.
