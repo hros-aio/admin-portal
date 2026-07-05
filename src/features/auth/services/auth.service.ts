@@ -1,10 +1,16 @@
 import { ApiError } from "@/lib/api/result";
 import { rawClient } from "@/lib/api/client";
 import type { LoginInput } from "@/features/auth/schemas/auth.schema";
-import type { components } from "@/types/api.generated";
+import type { components, operations } from "@/types/api.generated";
 
 export type LoginResponse = components["schemas"]["LoginResponse"];
 type MfaVerifyRequest = components["schemas"]["MFAVerifyRequest"];
+export type PasswordResetRequest = components["schemas"]["PasswordResetRequest"];
+export type PasswordResetConfirmRequest = components["schemas"]["PasswordResetConfirmRequest"];
+export type PasswordResetRequestResponse =
+  operations["passwordResetRequest"]["responses"][200]["content"]["application/json"];
+export type PasswordResetConfirmResponse =
+  operations["passwordResetConfirm"]["responses"][200]["content"]["application/json"];
 export type BiometricChallengeResponse = components["schemas"]["BiometricChallengeResponse"];
 export type BiometricVerifyRequest = components["schemas"]["BiometricVerifyRequest"];
 export type VerifyBiometricInput = BiometricVerifyRequest;
@@ -146,5 +152,47 @@ export const authService = {
     }
 
     return accessToken;
+  },
+
+  async requestPasswordReset(values: PasswordResetRequest): Promise<PasswordResetRequestResponse> {
+    const { data, error, response } = await rawClient.POST("/v1/auth/password-reset/request", {
+      body: values,
+    });
+    const status = response.status;
+
+    if (error) {
+      throw new ApiError(status, {
+        code: error.code,
+        message: error.message,
+      });
+    }
+
+    return ensureResponseBody(
+      data,
+      status,
+      "Password reset request response did not contain a response body."
+    );
+  },
+
+  async confirmPasswordReset(
+    values: PasswordResetConfirmRequest
+  ): Promise<PasswordResetConfirmResponse> {
+    const { data, error, response } = await rawClient.POST("/v1/auth/password-reset/confirm", {
+      body: values,
+    });
+    const status = response.status;
+
+    if (error) {
+      throw new ApiError(status, {
+        code: error.code,
+        message: error.message,
+      });
+    }
+
+    return ensureResponseBody(
+      data,
+      status,
+      "Password reset confirmation response did not contain a response body."
+    );
   },
 };

@@ -225,4 +225,70 @@ describe("authService", () => {
       await expect(authService.refreshSession()).rejects.toBeInstanceOf(ApiError);
     });
   });
+
+  describe("requestPasswordReset", () => {
+    it("returns the reset request response from a successful request", async () => {
+      mockPostResult({
+        data: { message: "If an account exists for that email, a reset link has been sent." },
+        response: new Response(null, { status: 200 }),
+      });
+
+      await expect(authService.requestPasswordReset({ email: "admin@hros.com" })).resolves.toEqual({
+        message: "If an account exists for that email, a reset link has been sent.",
+      });
+
+      expect(mockPost).toHaveBeenCalledWith("/v1/auth/password-reset/request", {
+        body: { email: "admin@hros.com" },
+      });
+    });
+
+    it("throws ApiError when reset request returns an error", async () => {
+      mockPostResult({
+        error: { code: "BAD_REQUEST", message: "Invalid request" },
+        response: new Response(null, { status: 400 }),
+      });
+
+      await expect(
+        authService.requestPasswordReset({ email: "admin@hros.com" })
+      ).rejects.toMatchObject({
+        code: "BAD_REQUEST",
+        status: 400,
+      });
+    });
+  });
+
+  describe("confirmPasswordReset", () => {
+    const payload = {
+      token: "reset-token",
+      password: "StrongPass1!",
+      password_confirmation: "StrongPass1!",
+    };
+
+    it("returns the reset confirmation response from a successful confirmation", async () => {
+      mockPostResult({
+        data: { message: "Password updated successfully." },
+        response: new Response(null, { status: 200 }),
+      });
+
+      await expect(authService.confirmPasswordReset(payload)).resolves.toEqual({
+        message: "Password updated successfully.",
+      });
+
+      expect(mockPost).toHaveBeenCalledWith("/v1/auth/password-reset/confirm", {
+        body: payload,
+      });
+    });
+
+    it("throws ApiError preserving reset confirmation error codes", async () => {
+      mockPostResult({
+        error: { code: "TOKEN_EXPIRED", message: "Reset token expired" },
+        response: new Response(null, { status: 400 }),
+      });
+
+      await expect(authService.confirmPasswordReset(payload)).rejects.toMatchObject({
+        code: "TOKEN_EXPIRED",
+        status: 400,
+      });
+    });
+  });
 });
