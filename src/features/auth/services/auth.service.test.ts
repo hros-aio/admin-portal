@@ -291,4 +291,42 @@ describe("authService", () => {
       });
     });
   });
+
+  describe("acceptInvite", () => {
+    const payload = {
+      token: "invite-token",
+      password: "StrongPass1!",
+      password_confirmation: "StrongPass1!",
+    };
+
+    it("returns the accept invite response from a successful activation", async () => {
+      mockPostResult({
+        data: { message: "Account activated successfully." },
+        response: new Response(null, { status: 200 }),
+      });
+
+      await expect(authService.acceptInvite(payload)).resolves.toEqual({
+        message: "Account activated successfully.",
+      });
+
+      expect(mockPost).toHaveBeenCalledWith("/v1/auth/accept-invite", {
+        body: payload,
+      });
+    });
+
+    it.each(["INVITE_EXPIRED", "INVITE_USED"] as const)(
+      "throws ApiError preserving %s invite error code",
+      async (code) => {
+        mockPostResult({
+          error: { code, message: code },
+          response: new Response(null, { status: 400 }),
+        });
+
+        await expect(authService.acceptInvite(payload)).rejects.toMatchObject({
+          code,
+          status: 400,
+        });
+      }
+    );
+  });
 });

@@ -7,10 +7,13 @@ export type LoginResponse = components["schemas"]["LoginResponse"];
 type MfaVerifyRequest = components["schemas"]["MFAVerifyRequest"];
 export type PasswordResetRequest = components["schemas"]["PasswordResetRequest"];
 export type PasswordResetConfirmRequest = components["schemas"]["PasswordResetConfirmRequest"];
+export type AcceptInviteRequest = components["schemas"]["AcceptInviteRequest"];
 export type PasswordResetRequestResponse =
   operations["passwordResetRequest"]["responses"][200]["content"]["application/json"];
 export type PasswordResetConfirmResponse =
   operations["passwordResetConfirm"]["responses"][200]["content"]["application/json"];
+export type AcceptInviteResponse =
+  operations["acceptInvite"]["responses"][200]["content"]["application/json"];
 export type BiometricChallengeResponse = components["schemas"]["BiometricChallengeResponse"];
 export type BiometricVerifyRequest = components["schemas"]["BiometricVerifyRequest"];
 export type VerifyBiometricInput = BiometricVerifyRequest;
@@ -193,6 +196,26 @@ export const authService = {
       data,
       status,
       "Password reset confirmation response did not contain a response body."
+    );
+  },
+
+  async acceptInvite(values: AcceptInviteRequest): Promise<AcceptInviteResponse> {
+    const { data, error, response } = await rawClient.POST("/v1/auth/accept-invite", {
+      body: values,
+    });
+    const status = response.status;
+
+    if (error) {
+      throw new ApiError(status, {
+        code: error.code,
+        message: error.message,
+      });
+    }
+
+    return ensureResponseBody(
+      data,
+      status,
+      "Accept invite response did not contain a response body."
     );
   },
 };
