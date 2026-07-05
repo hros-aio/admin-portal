@@ -1,134 +1,175 @@
 "use client";
 
-import { AuthButton } from "@/features/auth/components/auth-button";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+
+import { AcceptInviteForm } from "@/features/auth/components/accept-invite-form";
 import { AuthCard } from "@/features/auth/components/auth-card";
 import { AuthFooter } from "@/features/auth/components/auth-footer";
-import { AuthInput } from "@/features/auth/components/auth-input";
 import { AtmosphericBackground } from "@/features/auth/components/atmospheric-background";
-import {
-  BuildingIcon,
-  ArrowRightIcon,
-  ShieldIcon,
-  EyeIcon,
-  EyeOffIcon,
-} from "@/features/auth/components/icons";
-import { PasswordField } from "@/features/auth/components/password-field";
+import { ErrorBanner } from "@/features/auth/components/error-banner";
+import { BuildingIcon, ShieldIcon } from "@/features/auth/components/icons";
 import { TopAppBar } from "@/features/auth/components/top-app-bar";
-import * as React from "react";
+import { useAcceptInvite } from "@/features/auth/hooks/use-accept-invite";
 
 export default function AcceptInvitePage() {
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  return (
+    <Suspense fallback={null}>
+      <AcceptInviteContent />
+    </Suspense>
+  );
+}
+
+function AcceptInviteContent() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token")?.trim() ?? "";
+  const email = searchParams.get("email")?.trim() ?? "";
+  const acceptInvite = useAcceptInvite();
+  const linkError = getLinkError(token, email, acceptInvite.inviteError);
+  const passwordError =
+    acceptInvite.inviteError === "weak-password" ? "Choose a stronger password and try again." : "";
+  const unknownError =
+    acceptInvite.inviteError === "unknown" ? "Try again or contact your administrator." : "";
 
   return (
     <AtmosphericBackground>
       <TopAppBar />
 
-      <main className="flex min-h-screen flex-col items-center justify-center px-4 pb-[104.5px] pt-[152.5px] sm:px-6">
-        <AuthCard className="w-full max-w-[540px]">
-          <form
-            className="flex flex-col items-center gap-6"
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#e7eefe]">
-              <BuildingIcon className="h-8 w-8 text-[#1e00a9]" />
-            </div>
+      <main className="flex flex-1 flex-col items-center justify-center px-4 pb-[104.5px] pt-[152.5px] sm:px-6">
+        <div className="flex w-full max-w-[540px] flex-col gap-6">
+          {linkError ? <ErrorBanner title={linkError.title} message={linkError.message} /> : null}
 
-            <div className="text-center">
-              <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.28px] text-[#151c27]">
-                You have been invited to join Acme Corp Global
-              </h1>
-              <p className="mt-1 text-sm leading-5 text-[#464555]">
-                Administrative invitation for the HROS secure environment.
-              </p>
-            </div>
+          {unknownError ? (
+            <ErrorBanner title="Unable to accept invitation" message={unknownError} />
+          ) : null}
 
-            <div className="flex w-full flex-col gap-4 rounded-lg bg-[#f0f3ff] p-[17px] sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e2dfff]">
-                  <span className="text-base font-semibold text-[#0f0069]">AR</span>
+          <AuthCard className="w-full max-w-[540px] gap-0 p-[33px]" softShadow>
+            <div className="flex flex-col items-center gap-6">
+              <div className="flex w-full flex-col items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#e7eefe]">
+                  <BuildingIcon className="h-8 w-8 text-[#1e00a9]" />
                 </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase leading-4 tracking-[0.6px] text-[#777587]">
-                    Email Address
-                  </p>
-                  <p className="text-base font-semibold leading-6 text-[#1e00a9]">
-                    alex.r@acmecorp.com
+
+                <div className="text-center">
+                  <h1 className="text-[28px] font-semibold leading-9 tracking-[-0.28px] text-[#151c27]">
+                    You have been invited to join Acme Corp Global
+                  </h1>
+                  <p className="mt-1 text-sm leading-5 text-[#464555]">
+                    Administrative invitation for the HROS secure environment.
                   </p>
                 </div>
               </div>
-              <div className="shrink-0">
-                <span className="inline-flex items-center rounded-full bg-[#9af2c5] px-3 py-1 text-xs font-semibold leading-4 text-[#0c714d]">
-                  Super Admin
-                </span>
-              </div>
-            </div>
 
-            <div className="flex w-full flex-col gap-4">
-              <PasswordField
-                label="Create new password"
-                placeholder="Enter new password"
-                autoComplete="new-password"
-              />
+              <InviteBadge email={email} />
 
-              <AuthInput
-                label="Confirm password"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm new password"
-                autoComplete="new-password"
-                leftIcon={<ShieldIcon className="h-5 w-5" />}
-                rightElement={
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowConfirmPassword((prev) => !prev);
-                    }}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-[#777587] transition-colors hover:bg-[#f0f3ff] hover:text-[#1e00a9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e00a9] focus-visible:ring-offset-2"
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                    aria-pressed={showConfirmPassword}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOffIcon className="h-5 w-5" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5" />
-                    )}
-                  </button>
-                }
-              />
-            </div>
-
-            <AuthButton
-              type="submit"
-              size="large"
-              rightIcon={<ArrowRightIcon className="h-4 w-4" />}
-            >
-              Accept Invitation & Create Account
-            </AuthButton>
-
-            <div className="w-full border-t border-[rgba(199,196,216,0.5)] pt-[17px] text-center">
-              <p className="text-[11px] leading-4 text-[#777587]">
-                By accepting this invitation, you agree to the{" "}
-                <a
-                  href="/enterprise-security-policy"
-                  onClick={(e) => {
-                    e.preventDefault();
+              {token && email ? (
+                <AcceptInviteForm
+                  token={token}
+                  onSubmit={(values) => {
+                    acceptInvite.mutate(values);
                   }}
-                  className="font-semibold text-[#1e00a9] underline-offset-4 transition-colors hover:text-[#3525cd] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e00a9] focus-visible:ring-offset-2"
-                >
-                  Enterprise Security Policy
-                </a>
-                .
-              </p>
-              <p className="mt-2 text-xs font-semibold leading-4 text-[#006c49]">
-                End-to-End Encrypted Provisioning
-              </p>
+                  isLoading={acceptInvite.isPending}
+                  passwordError={passwordError}
+                />
+              ) : null}
+
+              <SecurityFooter />
             </div>
-          </form>
-        </AuthCard>
+          </AuthCard>
+        </div>
       </main>
 
-      <AuthFooter />
+      <AuthFooter showBrand variant="figma" />
     </AtmosphericBackground>
+  );
+}
+
+function getLinkError(
+  token: string,
+  email: string,
+  inviteError: ReturnType<typeof useAcceptInvite>["inviteError"]
+) {
+  if (!token || !email) {
+    return {
+      title: "Invalid invitation link",
+      message: "Ask your administrator for a new invitation link to continue.",
+    };
+  }
+
+  if (inviteError === "expired") {
+    return {
+      title: "Invitation expired",
+      message: "This invitation has expired...",
+    };
+  }
+
+  if (inviteError === "used") {
+    return {
+      title: "Invitation already used",
+      message: "This invitation has already been used.",
+    };
+  }
+
+  return null;
+}
+
+function InviteBadge({ email }: { email: string }) {
+  const displayEmail = email || "Unknown email";
+  const initials = getEmailInitials(email);
+
+  return (
+    <div className="w-full rounded-lg border border-[rgba(199,196,216,0.3)] bg-[#f0f3ff] p-[17px]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e2dfff]">
+            <span className="text-base font-bold leading-6 text-[#0f0069]">{initials}</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase leading-4 tracking-[0.6px] text-[#151c27]">
+              Email Address
+            </p>
+            <p className="truncate text-base font-semibold leading-6 text-[#1e00a9]">
+              {displayEmail}
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex w-fit shrink-0 items-center rounded-full bg-[#9af2c5] px-4 py-1 text-xs font-semibold leading-4 tracking-[0.6px] text-[#0c714d]">
+          Super Admin
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function getEmailInitials(email: string) {
+  const localPart = email.split("@")[0]?.trim();
+  if (!localPart) return "--";
+
+  const parts = localPart.split(/[._-]+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? "";
+  const second = parts[1]?.[0] ?? parts[0]?.[1] ?? "";
+  return `${first}${second}`.toUpperCase();
+}
+
+function SecurityFooter() {
+  return (
+    <div className="w-full border-t border-[rgba(199,196,216,0.2)] pt-[17px] text-center">
+      <p className="text-[11px] font-medium leading-[14px] text-[#777587]">
+        By accepting, you agree to the{" "}
+        <a
+          href="/enterprise-security-policy"
+          onClick={(event) => {
+            event.preventDefault();
+          }}
+          className="text-[#1e00a9] transition-colors hover:text-[#3525cd] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e00a9] focus-visible:ring-offset-2"
+        >
+          Enterprise Security Policy.
+        </a>
+      </p>
+      <p className="mt-4 inline-flex items-center justify-center gap-1 text-xs font-semibold leading-4 tracking-[0.6px] text-[#006c49]">
+        <ShieldIcon className="h-3.5 w-3.5" />
+        End-to-End Encrypted Provisioning
+      </p>
+    </div>
   );
 }
